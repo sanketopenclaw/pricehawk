@@ -124,24 +124,53 @@ window.phResearch = async function() {
   if (!niche) return alert('Enter a niche first');
   window._ph.niche = niche; window._ph.budget = budget;
   const el = document.getElementById('ph-opp-result');
-  el.innerHTML = '<div style="color:#888">Analysing SERP...</div>';
+  el.innerHTML = '<div style="color:#888">Scraping SERP + analysing top 3 competitor articles... (30-60s)</div>';
   try {
     const r = await fetch('/api/pricehawk/research', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({niche,budget}) });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error);
     const o = d.opportunities[0];
+    window._ph.research = o; // store for content generation
+
+    const competitorRows = (o.competitors_scraped || []).map(c =>
+      `<tr>
+        <td style="color:#ccc;padding:4px 8px">${esc(c.title || c.url)}</td>
+        <td style="color:#e67e22;padding:4px 8px;text-align:right">${esc(c.word_count || '?')}w</td>
+        <td style="color:#888;padding:4px 8px;font-size:11px">${esc((c.headings || []).slice(0,3).join(' · '))}</td>
+      </tr>`
+    ).join('');
+
+    const missingTopics = (o.topics_missing || []).map(t => `<li style="color:#27ae60">${esc(t)}</li>`).join('');
+    const suggestedH2s = (o.suggested_h2s || []).map(h => `<li style="color:#ccc">${esc(h)}</li>`).join('');
+
     el.innerHTML = `<div class="ph-card">
       <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:10px">${esc(o.suggested_title || d.keyword)}</div>
-      <div style="display:flex;gap:24px;margin-bottom:10px">
+      <div style="display:flex;gap:24px;margin-bottom:12px">
         <div><div style="color:#e67e22;font-size:22px;font-weight:700">${esc(o.opportunity_score||'?')}</div><div style="color:#888;font-size:11px">Score</div></div>
         <div><div style="color:#fff;font-size:22px;font-weight:700">${esc(o.competitor_count||'?')}</div><div style="color:#888;font-size:11px">Competitors</div></div>
         <div><div style="color:#fff;font-size:22px;font-weight:700">${esc(o.avg_word_count||'?')}</div><div style="color:#888;font-size:11px">Avg Words</div></div>
+        <div><div style="color:#27ae60;font-size:22px;font-weight:700">${esc(o.min_word_count||'?')}</div><div style="color:#888;font-size:11px">Beat At</div></div>
       </div>
-      ${o.weak_spots?.length ? `<div style="font-size:12px;color:#e67e22">Weak spots: ${esc(o.weak_spots.join(' · '))}</div>` : ''}
-      ${o.content_angle ? `<div style="font-size:12px;color:#aaa;margin-top:6px">Angle: ${esc(o.content_angle)}</div>` : ''}
+
+      ${competitorRows ? `<div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Scraped Competitors</div>
+        <table style="width:100%;border-collapse:collapse">${competitorRows}</table>
+      </div>` : ''}
+
+      ${missingTopics ? `<div style="margin-bottom:10px">
+        <div style="font-size:12px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Topics Competitors Missed ✓</div>
+        <ul style="margin:0;padding-left:16px;font-size:12px">${missingTopics}</ul>
+      </div>` : ''}
+
+      ${suggestedH2s ? `<div style="margin-bottom:10px">
+        <div style="font-size:12px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">Suggested H2 Structure</div>
+        <ol style="margin:0;padding-left:16px;font-size:12px">${suggestedH2s}</ol>
+      </div>` : ''}
+
+      ${o.content_angle ? `<div style="font-size:12px;color:#e67e22;margin-top:6px">Angle: ${esc(o.content_angle)}</div>` : ''}
       <button class="ph-btn-secondary" onclick="phTab('products')" style="margin-top:12px">→ Scrape Products</button>
     </div>`;
-  } catch(e) { el.innerHTML = `<div class="ph-status-err">${e.message}</div>`; }
+  } catch(e) { el.innerHTML = `<div class="ph-status-err">${esc(e.message)}</div>`; }
 };
 
 window.phScrapeProducts = async function() {
@@ -179,7 +208,7 @@ window.phGenerateContent = async function() {
   status.textContent = 'Generating... (30-60s)'; ta.value = '';
   try {
     const keyword = budget ? `Best ${niche} Under ₹${budget}` : `Best ${niche} India`;
-    const r = await fetch('/api/pricehawk/content', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({content_type:contentType,niche,budget,products:checked,keyword}) });
+    const r = await fetch('/api/pricehawk/content', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({content_type:contentType,niche,budget,products:checked,keyword,research:window._ph.research||null}) });
     const d = await r.json();
     if (!r.ok) throw new Error(d.error);
     window._ph.content = d.content; window._ph.schema = d.schema; window._ph.title = d.title;

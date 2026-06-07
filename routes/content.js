@@ -51,16 +51,29 @@ function buildSchema(contentType, title, products, niche) {
   return base
 }
 
-function buildPrompt(contentType, { niche, budget, products = [], keyword }) {
+function buildPrompt(contentType, { niche, budget, products = [], keyword, research = null }) {
   const effectiveKeyword = keyword || `Best ${niche} Under ₹${budget}`
   const productList = products.map((p, i) =>
     `${i + 1}. ${p.name} — ₹${p.price_inr || 'N/A'} | ${p.rating || 'N/A'}★ | ${p.reviews ? p.reviews.toLocaleString('en-IN') : 'N/A'} reviews | ${p.badge || ''}`
   ).join('\n')
 
+  // Inject competitive intelligence when available from research agent
+  const competitiveContext = research ? `
+COMPETITIVE INTELLIGENCE (from scraping top ${research.competitors_scraped?.length || 0} competitor articles):
+- Topics competitors cover well: ${(research.topics_covered || []).join(', ') || 'N/A'}
+- Topics competitors MISSED (cover these to win): ${(research.topics_missing || []).join(', ') || 'N/A'}
+- Competitor weak spots: ${(research.weak_spots || []).join(', ') || 'N/A'}
+- Average competitor word count: ${research.avg_word_count || 'N/A'} words — write at least ${research.min_word_count || 2500}
+- Winning angle: ${research.content_angle || 'N/A'}
+- Suggested H2 structure: ${(research.suggested_h2s || []).join(' → ') || 'use standard guide structure'}
+
+USE THIS INTELLIGENCE: Cover all topics competitors missed. Follow the suggested H2 structure. Exploit every weak spot listed above.
+` : ''
+
   switch (contentType) {
     case 'guide':
       return `${BRAND_VOICE}
-
+${competitiveContext}
 Write a comprehensive buying guide: "${effectiveKeyword}"
 
 Products to cover (use real data):
@@ -87,7 +100,7 @@ _Last Updated: ${new Date().toLocaleDateString('en-IN', { month: 'long', year: '
 
 ## Author Bio (E-E-A-T signal)
 
-Word count: 2500-3500. No keyword stuffing. No fake urgency.`
+Word count: ${research?.min_word_count || 2500}-${(research?.min_word_count || 2500) + 1000}. No keyword stuffing. No fake urgency.`
 
     case 'comparison':
       return `${BRAND_VOICE}
@@ -231,7 +244,7 @@ Word count: 1500-2000. Honest — include real cons.`
 }
 
 router.post('/content', async (req, res) => {
-  const { content_type, niche, budget, products = [], keyword } = req.body
+  const { content_type, niche, budget, products = [], keyword, research = null } = req.body
 
   if (!content_type) {
     return res.status(400).json({ error: 'content_type required' })
@@ -248,7 +261,7 @@ router.post('/content', async (req, res) => {
     return res.status(500).json({ error: 'OPENROUTER_API_KEY not set' })
   }
 
-  const prompt = buildPrompt(content_type, { niche, budget, products, keyword })
+  const prompt = buildPrompt(content_type, { niche, budget, products, keyword, research })
   const title = keyword || `Best ${niche}${budget ? ` Under ₹${budget}` : ''}`
 
   try {
