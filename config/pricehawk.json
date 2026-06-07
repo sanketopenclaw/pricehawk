@@ -1,0 +1,25 @@
+{
+  "brand": "PriceHawk",
+  "tagline": "We track the prices. You make better buying decisions.",
+  "target_market": "India",
+  "currency": "INR",
+  "currency_symbol": "₹",
+  "sources": ["amazon.in", "flipkart.com"],
+  "amazon_affiliate_tag": "pricehawk-21",
+  "telegram_channel": "@PriceHawkDeals",
+  "wordpress": {
+    "categories": {
+      "guide": "Buying Guides",
+      "comparison": "Comparisons",
+      "deals": "Deals",
+      "pricedrop": "Price Drops",
+      "review": "Reviews"
+    }
+  },
+  "year_one_targets": {
+    "month_1": { "articles": 50, "revenue_min": 0, "revenue_max": 1000 },
+    "month_3": { "articles": 150, "revenue_min": 1000, "revenue_max": 10000 },
+    "month_6": { "articles": 300, "revenue_min": 10000, "revenue_max": 50000 },
+    "month_12": { "articles": 500, "revenue_min": 50000, "revenue_max": 200000 }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "amazon_associates": {
+    "name": "Amazon Associates",
+    "tag_param": "tag",
+    "base_url": "https://www.amazon.in/dp/",
+    "link_format": "https://www.amazon.in/dp/{ASIN}?tag={TAG}",
+    "env_key": "AMAZON_AFFILIATE_TAG"
+  },
+  "earnkaro": {
+    "name": "EarnKaro",
+    "api_base": "https://api.earnkaro.com/v1",
+    "deeplink_endpoint": "/deeplink",
+    "env_key": "EARNKARO_API_KEY",
+    "supported_stores": ["amazon.in", "flipkart.com", "myntra.com", "ajio.com"]
+  },
+  "cuelinks": {
+    "name": "Cuelinks",
+    "api_base": "https://cl.cuelinks.com/api",
+    "deeplink_endpoint": "/deeplink",
+    "env_key": "CUELINKS_CID",
+    "supported_stores": ["amazon.in", "flipkart.com", "nykaa.com", "meesho.com"]
+  }
+}
