@@ -111,7 +111,7 @@ function initPricehawk(container) {
   phCheckWpStatus();
   phLoadKpi();
   phLoadWatchlist();
-});
+}
 
 window.phTab = function(tab) {
   document.querySelectorAll('.ph-tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase() === tab));
