@@ -8,6 +8,7 @@ const {
   resolveOffer, specTable, featureHighlights,
   familySizeFromCapacity, getSpecVal, asciDisclosure,
   methodologyBlock, loadProducts, sparklineSVG,
+  buildSlugIndex, relatedLinks,
 } = require('./lib/content')
 const { reviewSchema, slugify } = require('./lib/schema')
 
@@ -167,7 +168,7 @@ ${bullets.map(b => `  <li>${b}</li>`).join('\n')}
 </ul>`
 }
 
-function buildReviewHTML(product, catSlug) {
+function buildReviewHTML(product, catSlug, slugIndex = {}) {
   const name     = product.product_name || product._legacy?.name || 'Product'
   const brand    = titleCase(product.brand_id || '')
   const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
@@ -234,6 +235,8 @@ ${faqs.map(([q, a]) => `<details style="border:1px solid #e0e0e0;border-radius:4
   <div style="padding:12px 16px;font-size:14px;line-height:1.7;color:#333;">${a}</div>
 </details>`).join('\n')}` : ''}
 
+${relatedLinks(asin, catSlug, slugIndex, catLabel)}
+
 <hr style="margin:32px 0;border:none;border-top:1px solid #e0e0e0;">
 <p style="font-size:13px;color:#888;">
   <a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← Compare all ${catLabel}s in India ${YEAR}</a>
@@ -254,6 +257,7 @@ async function main() {
   if (!fs.existsSync(QUEUE_FILE)) { console.error('Run content-opportunity-engine.js first'); process.exit(1) }
 
   const productIndex = loadProducts(KITCHEN, PRODS_DIR)
+  const slugIndex = buildSlugIndex(JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8')))
 
   const queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'))
     .filter(o => o.type === 'review')
@@ -277,7 +281,7 @@ async function main() {
     const title   = `${short} Review — Worth Buying in India ${YEAR}?`
 
     try {
-      const html   = buildReviewHTML(product, catSlug)
+      const html   = buildReviewHTML(product, catSlug, slugIndex)
       const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${short.substring(0, 45)}`)

@@ -7,6 +7,7 @@ const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
   resolveOffer, specTable, asciDisclosure,
   methodologyBlock, loadProducts, getSpecVal,
+  buildSlugIndex, relatedLinks,
 } = require('./lib/content')
 const { comparisonSchema, slugify } = require('./lib/schema')
 
@@ -116,7 +117,7 @@ function buildPickDecisions(p1, p2, specs1, specs2) {
   return { reasons1, reasons2 }
 }
 
-function buildComparisonHTML(p1, p2, catSlug) {
+function buildComparisonHTML(p1, p2, catSlug, slugIndex = {}) {
   const name1  = p1.product_name || p1._legacy?.name || 'Product 1'
   const name2  = p2.product_name || p2._legacy?.name || 'Product 2'
   const brand1 = titleCase(p1.brand_id || '')
@@ -242,6 +243,8 @@ ${faqs.map(([q, a]) => `<details style="border:1px solid #e0e0e0;border-radius:4
   <div style="padding:12px 16px;font-size:14px;line-height:1.7;color:#333;">${a}</div>
 </details>`).join('\n')}` : ''}
 
+${relatedLinks(asin1, catSlug, slugIndex, catLabel)}
+
 <hr style="margin:32px 0;border:none;border-top:1px solid #e0e0e0;">
 <p style="font-size:13px;color:#888;">
   <a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← See all ${catLabel}s compared in India ${YEAR}</a>
@@ -262,6 +265,7 @@ async function main() {
   if (!fs.existsSync(QUEUE_FILE)) { console.error('Run content-opportunity-engine.js first'); process.exit(1) }
 
   const productIndex = loadProducts(KITCHEN, PRODS_DIR)
+  const slugIndex = buildSlugIndex(JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8')))
   const queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'))
     .filter(o => o.type === 'comparison')
     .filter(o => !catFilter || o.category === catFilter)
@@ -289,7 +293,7 @@ async function main() {
     const title   = `${name1} vs ${name2} — Which Is Better for Indian Homes?`
 
     try {
-      const html   = buildComparisonHTML(p1, p2, catSlug)
+      const html   = buildComparisonHTML(p1, p2, catSlug, slugIndex)
       const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${name1.substring(0,30)} vs ${name2.substring(0,30)}`)
