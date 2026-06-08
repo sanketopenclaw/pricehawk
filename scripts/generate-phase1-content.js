@@ -17,14 +17,14 @@
 require('dotenv').config()
 const fs   = require('fs')
 const path = require('path')
-const axios = require('axios')
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
-const { asciDisclosure, methodologyBlock } = require('./lib/content')
+const { asciDisclosure, methodologyBlock, resolveOffer } = require('./lib/content')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
 const PASS = process.env.WORDPRESS_APP_PASSWORD
 const AUTH = makeAuth(USER, PASS)
+const TAG  = process.env.AMAZON_AFFILIATE_TAG || 'pricehawkin-21'
 
 const PRODS_DIR = path.join(__dirname, '../data/products')
 const YEAR = new Date().getFullYear()
@@ -114,7 +114,7 @@ function buildCategoryHubHTML(catSlug, products) {
   )]
 
   const productRows = sorted.map((p, i) => {
-    const link = p.offers?.affiliate_url || `https://www.amazon.in/dp/${p.offers?.external_id}?tag=pricehawkin-21`
+    const link = resolveOffer(p).affiliate_url || `https://www.amazon.in/dp/${resolveOffer(p).external_id}?tag=${TAG}`
     const name = p.product_name || p._legacy?.name || 'Product'
     const brand = titleCase(p.brand_id || '')
 
@@ -154,7 +154,7 @@ function buildCategoryHubHTML(catSlug, products) {
           '@type': 'ListItem',
           position: i + 1,
           name: p.product_name || p._legacy?.name,
-          url: p.offers?.affiliate_url,
+          url: resolveOffer(p).affiliate_url,
         }))
       }
     ]
@@ -195,7 +195,7 @@ function buildBrandPageHTML(brand, catSlug, brandProducts) {
   const sorted = sortByPopularity(brandProducts)
 
   const productRows = sorted.map((p, i) => {
-    const link = p.offers?.affiliate_url || `https://www.amazon.in/dp/${p.offers?.external_id}?tag=pricehawkin-21`
+    const link = resolveOffer(p).affiliate_url || `https://www.amazon.in/dp/${resolveOffer(p).external_id}?tag=${TAG}`
     const name = p.product_name || p._legacy?.name || 'Product'
 
     return `<div style="border-bottom:1px solid #e8e8e8;padding:14px 0;">
