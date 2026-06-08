@@ -42,7 +42,7 @@ const TICKER_DATA = `const ticker = [
   { "name": "Livpure RO Water Purifier", "now": 7499, "dir": "down", "delta": 18, "link": "https://www.amazon.in/dp/B074FRSGY9?tag=${TAG}" },
   { "name": "Samsung 183L Refrigerator", "now": 20690, "dir": "down", "delta": 13, "link": "https://www.amazon.in/dp/B0BR3WHPQP?tag=${TAG}" },
   { "name": "IFB 10Kg Washing Machine", "now": 31990, "dir": "down", "delta": 22, "link": "https://www.amazon.in/dp/B0CQNZC5GS?tag=${TAG}" },
-  { "name": "HP Core i3 Laptop 15.6\"", "now": 48490, "dir": "down", "delta": 17, "link": "https://www.amazon.in/dp/B0F4R5W1NC?tag=${TAG}" }
+  { "name": "HP Core i3 Laptop 15.6in", "now": 48490, "dir": "down", "delta": 17, "link": "https://www.amazon.in/dp/B0F4R5W1NC?tag=${TAG}" }
 ]`
 
 const STAFF_PICKS_DATA = `const staffPicks = [
