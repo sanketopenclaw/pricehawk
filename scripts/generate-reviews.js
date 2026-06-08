@@ -8,7 +8,7 @@ const {
   resolveOffer, specTable, featureHighlights,
   familySizeFromCapacity, getSpecVal, asciDisclosure,
   methodologyBlock, loadProducts, sparklineSVG,
-  buildSlugIndex, relatedLinks,
+  buildSlugIndex, relatedLinks, metaDescription,
 } = require('./lib/content')
 const { reviewSchema, slugify } = require('./lib/schema')
 
@@ -281,8 +281,12 @@ async function main() {
     const title   = `${short} Review — Worth Buying in India ${YEAR}?`
 
     try {
+      const specs    = product.specifications || {}
+      const seg      = product.price_segment || product._legacy?.price_segment || 'mid-range'
+      const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
+      const metaDesc = metaDescription(name, catLabel, specs, seg)
       const html   = buildReviewHTML(product, catSlug, slugIndex)
-      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun })
+      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${short.substring(0, 45)}`)
         result.action === 'created' ? stats.created++ : stats.updated++

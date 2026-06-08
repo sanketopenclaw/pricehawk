@@ -7,7 +7,7 @@ const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
   resolveOffer, featureHighlights,
   asciDisclosure, methodologyBlock, loadProducts, getSpecVal, sparklineSVG,
-  bestValueScore, topValueProduct,
+  bestValueScore, topValueProduct, metaDescription,
 } = require('./lib/content')
 const { guideSchema, slugify } = require('./lib/schema')
 
@@ -250,8 +250,10 @@ async function main() {
         : `Best ${catLabel} in India ${YEAR}`
 
     try {
+      const guideMetaDesc = `Best ${catLabel} in India ${YEAR} — top picks ranked by specs and value. ${products.length} options compared.`
+      const md = guideMetaDesc.length > 160 ? guideMetaDesc.substring(0, 157) + '…' : guideMetaDesc
       const html   = buildGuideHTML(products, catSlug, sub, useCase)
-      const result = await wpUpsertPage({ title, slug: guideSlug, content: html }, { wp: WP, auth: AUTH, dryRun })
+      const result = await wpUpsertPage({ title, slug: guideSlug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc: md })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${sub} | ${useCase || 'general'}`)
         result.action === 'created' ? stats.created++ : stats.updated++

@@ -7,7 +7,7 @@ const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
   resolveOffer, specTable, asciDisclosure,
   methodologyBlock, loadProducts, getSpecVal,
-  buildSlugIndex, relatedLinks,
+  buildSlugIndex, relatedLinks, metaDescription,
 } = require('./lib/content')
 const { comparisonSchema, slugify } = require('./lib/schema')
 
@@ -293,8 +293,13 @@ async function main() {
     const title   = `${name1} vs ${name2} — Which Is Better for Indian Homes?`
 
     try {
+      const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
+      const metaDesc = (() => {
+        const raw = `${name1} vs ${name2} — spec-by-spec ${catLabel.toLowerCase()} comparison for Indian buyers. Which is better value?`
+        return raw.length > 160 ? raw.substring(0, 157) + '…' : raw
+      })()
       const html   = buildComparisonHTML(p1, p2, catSlug, slugIndex)
-      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun })
+      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${name1.substring(0,30)} vs ${name2.substring(0,30)}`)
         result.action === 'created' ? stats.created++ : stats.updated++

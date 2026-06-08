@@ -18,7 +18,7 @@ require('dotenv').config()
 const fs   = require('fs')
 const path = require('path')
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
-const { asciDisclosure, methodologyBlock, resolveOffer } = require('./lib/content')
+const { asciDisclosure, methodologyBlock, resolveOffer, metaDescription } = require('./lib/content')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -266,11 +266,14 @@ async function main() {
     // Category hub
     if (!typeFilter || typeFilter === 'category_page') {
       try {
+        const productCount = products.length
+        const hubMeta = `Best ${catLabel} in India ${YEAR} — ${productCount} models compared by specs, brand, and value for Indian buyers.`
+        const hubMd = hubMeta.length > 160 ? hubMeta.substring(0, 157) + '…' : hubMeta
         const result = await wpUpsertPage({
           title:   `Best ${catLabel} in India ${YEAR} — Prices, Reviews & Deals`,
           slug:    `best-${catSlug}`,
           content: buildCategoryHubHTML(catSlug, products),
-        }, { wp: WP, auth: AUTH, dryRun })
+        }, { wp: WP, auth: AUTH, dryRun, metaDesc: hubMd })
         if (result) console.log(`  ✓ category hub [${result.action}]: ${result.link}`)
         stats.category_page++
       } catch (e) {
@@ -295,11 +298,13 @@ async function main() {
       for (const [brandSlug, brandProducts] of topBrandEntries) {
         const brand = titleCase(brandSlug)
         try {
+          const brandMeta = `${brand} ${catLabel} in India — full range with specs and Amazon prices. Find the right model for your needs.`
+          const brandMd = brandMeta.length > 160 ? brandMeta.substring(0, 157) + '…' : brandMeta
           const result = await wpUpsertPage({
             title:   `${brand} ${catLabel} India — Best Prices & Reviews`,
             slug:    `${catSlug}-${brandSlug}`,
             content: buildBrandPageHTML(brand, catSlug, brandProducts),
-          }, { wp: WP, auth: AUTH, dryRun })
+          }, { wp: WP, auth: AUTH, dryRun, metaDesc: brandMd })
           if (result) console.log(`  ✓ brand [${brand}] [${result.action}]: ${result.link}`)
           stats.brand_page++
         } catch (e) {
