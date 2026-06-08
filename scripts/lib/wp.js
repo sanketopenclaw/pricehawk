@@ -1,5 +1,4 @@
 // scripts/lib/wp.js
-require('dotenv').config()
 const axios = require('axios')
 
 function makeAuth(user, pass) {
