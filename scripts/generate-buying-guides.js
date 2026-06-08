@@ -7,6 +7,7 @@ const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
   resolveOffer, featureHighlights,
   asciDisclosure, methodologyBlock, loadProducts, getSpecVal, sparklineSVG,
+  bestValueScore, topValueProduct,
 } = require('./lib/content')
 const { guideSchema, slugify } = require('./lib/schema')
 
@@ -123,7 +124,7 @@ function getProductsForCat(catSlug, productIndex, n=5) {
     .slice(0, n)
 }
 
-function buildProductCard(product, catSlug, position) {
+function buildProductCard(product, catSlug, position, topValueId = null) {
   const name    = product.product_name || product._legacy?.name || 'Product'
   const brand   = titleCase(product.brand_id || '')
   const offer   = resolveOffer(product)
@@ -143,9 +144,10 @@ function buildProductCard(product, catSlug, position) {
   const segLabel = seg ? seg.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : null
   const productId = product.product_id || null
   const sparkline = productId ? sparklineSVG(productId, PRICE_SERIES_DIR) : ''
+  const isBestValue = topValueId && product.product_id && product.product_id === topValueId
 
   return `<div style="border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;margin-bottom:16px;">
-  <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">#${position} · ${brand}${segLabel ? ` · ${segLabel}` : ''}</p>
+  <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">#${position} · ${brand}${segLabel ? ` · ${segLabel}` : ''}${isBestValue ? ' <span style="background:#4caf50;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;margin-left:4px;vertical-align:middle;">BEST VALUE</span>' : ''}</p>
   <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;line-height:1.4;">${shortName(name, 70)}</h3>
   ${specBits.length ? `<p style="font-size:13px;color:#555;margin:0 0 8px;">${specBits.join(' · ')}</p>` : ''}
   ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 6px;">Price trend ${sparkline}</p>` : ''}
@@ -164,6 +166,9 @@ function buildGuideHTML(products, catSlug, subtype, useCase) {
   const factors     = CAT_BUYING_FACTORS[catSlug] || []
   const guideSlug   = `best-${catSlug}${useCase ? '-' + slugify(useCase) : ''}${subtype === 'budget' ? '-budget' : ''}`
 
+  const topValue = topValueProduct(products)
+  const topValueId = topValue ? (topValue.product_id || null) : null
+
   const productList = products.map((p) => ({
     name: shortName(p.product_name || p._legacy?.name || '', 60),
     link: (() => { const o = resolveOffer(p); return o.affiliate_url || `https://www.amazon.in/dp/${o.external_id || p._legacy?.asin}?tag=${TAG}` })()
@@ -171,7 +176,7 @@ function buildGuideHTML(products, catSlug, subtype, useCase) {
 
   const schema = guideSchema({ catLabel, catSlug, slug: guideSlug, products: productList })
 
-  const cardsHTML = products.map((p, i) => buildProductCard(p, catSlug, i + 1)).join('\n')
+  const cardsHTML = products.map((p, i) => buildProductCard(p, catSlug, i + 1, topValueId)).join('\n')
 
   const factorsHTML = factors.length ? `
 <h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;">What to Look For</h2>
