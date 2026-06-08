@@ -1,4 +1,4 @@
-const { Router } = require('express')
+﻿const { Router } = require('express')
 const axios = require('axios')
 const fs = require('fs')
 const path = require('path')
@@ -30,7 +30,7 @@ async function scrapeCurrentPrice(asin) {
       { headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' } }
     )
     const markdown = response.data?.data?.markdown || ''
-    const match = markdown.match(/₹[\s]?([\d,]+)/)
+    const match = markdown.match(/â‚¹[\s]?([\d,]+)/)
     if (!match) return null
     return parseInt(match[1].replace(/,/g, ''))
   } catch {
@@ -44,13 +44,13 @@ async function sendTelegramAlert(product, currentPrice, baselinePrice) {
   if (!token || !channelId) return false
 
   const discount = Math.round((1 - currentPrice / baselinePrice) * 100)
-  const tag = process.env.AMAZON_AFFILIATE_TAG || 'pricehawk-21'
+  const tag = process.env.AMAZON_AFFILIATE_TAG || 'pricehawkin-21'
   const link = `https://www.amazon.in/dp/${product.asin}?tag=${tag}`
   const text =
-    `🔥 *Price Drop Alert | PriceHawk*\n` +
-    `📦 ${product.name}\n` +
-    `💰 Now ₹${currentPrice.toLocaleString('en-IN')} (was ₹${baselinePrice.toLocaleString('en-IN')}) — ${discount}% OFF\n` +
-    `🛒 ${link}\n` +
+    `ðŸ”¥ *Price Drop Alert | PriceHawk*\n` +
+    `ðŸ“¦ ${product.name}\n` +
+    `ðŸ’° Now â‚¹${currentPrice.toLocaleString('en-IN')} (was â‚¹${baselinePrice.toLocaleString('en-IN')}) â€” ${discount}% OFF\n` +
+    `ðŸ›’ ${link}\n` +
     `#${(product.niche || 'deal').replace(/\s/g, '').toLowerCase()} #pricedrop`
 
   try {

@@ -1,11 +1,11 @@
-{
+﻿{
   "brand": "PriceHawk",
   "tagline": "We track the prices. You make better buying decisions.",
   "target_market": "India",
   "currency": "INR",
-  "currency_symbol": "₹",
+  "currency_symbol": "â‚¹",
   "sources": ["amazon.in", "flipkart.com"],
-  "amazon_affiliate_tag": "pricehawk-21",
+  "amazon_affiliate_tag": "pricehawkin-21",
   "telegram_channel": "@PriceHawkDeals",
   "wordpress": {
     "categories": {

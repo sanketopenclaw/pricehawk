@@ -1,4 +1,4 @@
-const { Router } = require('express')
+﻿const { Router } = require('express')
 const axios = require('axios')
 const path = require('path')
 
@@ -8,7 +8,7 @@ const PH_CONFIG = require(path.join(__dirname, '../config/pricehawk.json'))
 
 const VALID_NETWORKS = ['amazon', 'earnkaro', 'cuelinks', 'auto']
 
-const AMAZON_TAG = process.env.AMAZON_AFFILIATE_TAG || PH_CONFIG.amazon_affiliate_tag || 'pricehawk-21'
+const AMAZON_TAG = process.env.AMAZON_AFFILIATE_TAG || PH_CONFIG.amazon_affiliate_tag || 'pricehawkin-21'
 
 const ALLOWED_AFFILIATE_HOSTS = new Set([
   'www.amazon.in', 'amazon.in',
@@ -39,7 +39,7 @@ async function verifyLink(url) {
 
 async function buildAmazonUrl(product) {
   if (!product.asin) return null
-  const tag = process.env.AMAZON_AFFILIATE_TAG || PH_CONFIG.amazon_affiliate_tag || 'pricehawk-21'
+  const tag = process.env.AMAZON_AFFILIATE_TAG || PH_CONFIG.amazon_affiliate_tag || 'pricehawkin-21'
   return `https://www.amazon.in/dp/${product.asin}?tag=${tag}`
 }
 
@@ -141,7 +141,8 @@ router.post('/monetize', async (req, res) => {
       network: usedNetwork
     })
 
-    result = result.replace(fullMatch, `[${product.name}](${url})`)
+    const imgMd = product.image_url ? `![${product.name}](${product.image_url})\n\n` : ''
+    result = result.replace(fullMatch, `${imgMd}[${product.name}](${url})`)
   }
 
   return res.json({

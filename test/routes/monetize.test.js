@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+﻿import { describe, it, expect, beforeAll } from 'vitest'
 import request from 'supertest'
 import express from 'express'
 
 let app
 beforeAll(async () => {
-  process.env.AMAZON_AFFILIATE_TAG = 'pricehawk-21'
+  process.env.AMAZON_AFFILIATE_TAG = 'pricehawkin-21'
   const router = (await import('../../routes/monetize.js')).default
   app = express()
   app.use(express.json())
@@ -26,7 +26,7 @@ describe('POST /api/pricehawk/monetize', () => {
     })
     expect(r.status).toBe(200)
     expect(r.body.content).toContain('amazon.in')
-    expect(r.body.content).toContain('pricehawk-21')
+    expect(r.body.content).toContain('pricehawkin-21')
     expect(r.body.links_inserted).toBe(1)
   })
 

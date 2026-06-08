@@ -8,14 +8,56 @@ const PRICEHAWK_CONFIG = require(path.join(__dirname, '../config/pricehawk.json'
 
 const VALID_CONTENT_TYPES = ['guide', 'comparison', 'deals', 'pricedrop', 'review']
 
-const BRAND_VOICE = `You are a helpful, analytical, consumer-first shopping advisor for PriceHawk — India's trusted price tracking platform.
-Rules:
-- Never hype products or use fake urgency ("limited time", "hurry", "act now" are banned)
-- Never recommend based on affiliate commission alone
-- Act like an intelligent friend helping someone spend money wisely in India
+const BRAND_VOICE = `You are a PriceHawk editor — a product researcher who obsessively studies specs, reviews, and price history before recommending anything. Engineering background. 5+ years covering consumer tech for Indian buyers.
+
+VOICE RULES (follow exactly):
+- Write like you're texting a friend who asked for advice — conversational, direct, zero corporate tone
+- Use "I", "honestly", "to be honest", "I think", "probably", "I'm not sure", "it depends", "let's see"
+- Phrases like: "I looked at 40 reviews before picking this", "I was surprised by", "I almost missed this", "here's what I found"
+- Comfortable with uncertainty — say "I don't know" or "hard to tell without testing" when specs don't tell the full story
+- NEVER claim first-hand testing, personal ownership, or physical measurements unless verified — use "based on specs and user reviews", "according to verified buyers", "spec sheets show"
+- Never: leverage, synergy, ultimate, game-changer, rockstar, guru, cutting-edge, revolutionary, seamless
+- Never fake enthusiasm. If a product is mediocre, say it plainly
+- Never urgency language: "limited time", "hurry", "act now", "don't miss"
+- Verdict style: "I'd buy X because...", "Honestly Y feels overpriced for what you get", "If I had ₹X I'd go with Z"
+
+CONTENT RULES:
 - Always cite real specs, real ₹ prices, real review counts
-- Use Indian context: monsoon durability, Indian voltage (230V), local brand familiarity (boAt, Noise, Redmi)
-- Validate mentally: "Would a real Indian shopper find this useful?" — if no, rewrite`
+- Indian context: monsoon/dust durability, Indian voltage (230V), local brand familiarity (boAt, Noise, Redmi, realme)
+- Never recommend based on commission — recommend what you'd actually buy
+- Validate: "Would a real Indian shopper find this useful?" — if no, rewrite
+- One clear winner per article. Don't hedge into "it depends on your needs" for the final verdict
+- Author attribution: use "PriceHawk Research Team" — never a personal name`
+
+const AUDIT_SYSTEM = `You are the Chief Editor and QA system for PriceHawk. Audit articles against these rules and return ONLY valid JSON.
+
+SCORING (1-10 each):
+1. search_intent_match — does structure match what searcher expects?
+2. trustworthiness — affiliate disclosure, methodology, sourcing
+3. eeat — experience, expertise, authoritativeness, trustworthiness signals
+4. originality — unique insights not found on generic affiliate blogs
+5. conversion_potential — CTAs, product positioning, buy-decision support
+6. user_experience — structure, scannability, formatting
+7. information_gain — data depth, specs, comparisons, decision frameworks
+8. affiliate_quality — placement, disclosure, relevance
+9. seo_strength — keyword usage, H2 structure, FAQ coverage
+10. long_term_potential — evergreen value, update-ability
+
+CRITICAL FLAGS (auto-fail if present):
+- Fake experience: "I tested", "I measured", "I wore", "I used for X weeks", "I carried daily" — unless explicitly sourced
+- Unsupported opinions with no spec/review data backing them
+- Missing affiliate disclosure
+- No clear winner/recommendation
+- Rankings with no justification
+
+Return JSON:
+{
+  "scores": { "search_intent_match": N, "trustworthiness": N, "eeat": N, "originality": N, "conversion_potential": N, "user_experience": N, "information_gain": N, "affiliate_quality": N, "seo_strength": N, "long_term_potential": N },
+  "overall": N,
+  "critical_flags": ["..."],
+  "top_problems": ["specific problem 1", ...],
+  "revision_instructions": ["Exact rewrite instruction 1", ...]
+}`
 
 function validateContent(content, type) {
   const wordCount = content.split(/\s+/).length
@@ -51,8 +93,17 @@ function buildSchema(contentType, title, products, niche) {
   return base
 }
 
+const YEAR_TYPES = new Set(['guide', 'comparison', 'review'])
+const CURRENT_YEAR = new Date().getFullYear()
+
+function withYear(keyword) {
+  if (/\b20\d{2}\b/.test(keyword)) return keyword
+  return `${keyword} in ${CURRENT_YEAR}`
+}
+
 function buildPrompt(contentType, { niche, budget, products = [], keyword, research = null }) {
-  const effectiveKeyword = keyword || `Best ${niche} Under ₹${budget}`
+  const base = keyword || `Best ${niche} Under ₹${budget}`
+  const effectiveKeyword = YEAR_TYPES.has(contentType) ? withYear(base) : base
   const productList = products.map((p, i) =>
     `${i + 1}. ${p.name} — ₹${p.price_inr || 'N/A'} | ${p.rating || 'N/A'}★ | ${p.reviews ? p.reviews.toLocaleString('en-IN') : 'N/A'} reviews | ${p.badge || ''}`
   ).join('\n')
@@ -98,7 +149,11 @@ _Last Updated: ${new Date().toLocaleDateString('en-IN', { month: 'long', year: '
 
 ## FAQ (6-8 questions, 40-60 word answers each)
 
-## Author Bio (E-E-A-T signal)
+## Methodology
+Brief paragraph: explain products were evaluated using Amazon ratings, verified review volume, published specs (battery mAh, driver size, connectivity), warranty terms, and value-per-rupee scoring. Weighted: 30% performance specs, 25% user review sentiment, 20% battery/durability, 15% comfort/build, 10% value.
+
+## About PriceHawk
+One sentence: PriceHawk is an independent Indian product research site. No manufacturer sponsorships. Rankings based on data, not commissions.
 
 Word count: ${research?.min_word_count || 2500}-${(research?.min_word_count || 2500) + 1000}. No keyword stuffing. No fake urgency.`
 
@@ -243,6 +298,57 @@ Word count: 1500-2000. Honest — include real cons.`
   }
 }
 
+const AUDIT_SCORE_THRESHOLD = 7
+
+async function runAudit(client, model, articleContent, title) {
+  const prompt = `Audit this PriceHawk article titled "${title}":\n\n${articleContent.slice(0, 8000)}`
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: AUDIT_SYSTEM },
+        { role: 'user', content: prompt }
+      ]
+    })
+    const raw = res.choices[0]?.message?.content || '{}'
+    // extract JSON even if wrapped in markdown fences
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return null
+    return JSON.parse(jsonMatch[0])
+  } catch {
+    return null
+  }
+}
+
+async function reviseContent(client, model, originalContent, auditReport) {
+  const instructions = (auditReport.revision_instructions || []).join('\n- ')
+  const flags = (auditReport.critical_flags || []).join('\n- ')
+  const prompt = `${BRAND_VOICE}
+
+You are revising a PriceHawk article. Apply ALL of these specific improvements:
+
+CRITICAL ISSUES TO FIX:
+- ${flags || 'none'}
+
+REQUIRED CHANGES:
+- ${instructions || 'Improve clarity and data depth'}
+
+ORIGINAL ARTICLE:
+${originalContent}
+
+Rewrite the full article applying every change listed. Keep all product data, prices, and affiliate link placeholders intact. Same structure, better execution.`
+
+  try {
+    const res = await client.chat.completions.create({
+      model,
+      messages: [{ role: 'user', content: prompt }]
+    })
+    return res.choices[0]?.message?.content || originalContent
+  } catch {
+    return originalContent
+  }
+}
+
 router.post('/content', async (req, res) => {
   const { content_type, niche, budget, products = [], keyword, research = null } = req.body
 
@@ -262,7 +368,8 @@ router.post('/content', async (req, res) => {
   }
 
   const prompt = buildPrompt(content_type, { niche, budget, products, keyword, research })
-  const title = keyword || `Best ${niche}${budget ? ` Under ₹${budget}` : ''}`
+  const baseTitle = keyword || `Best ${niche}${budget ? ` Under ₹${budget}` : ''}`
+  const title = YEAR_TYPES.has(content_type) ? withYear(baseTitle) : baseTitle
 
   try {
     const client = new OpenAI({
@@ -277,27 +384,45 @@ router.post('/content', async (req, res) => {
       messages: [{ role: 'user', content: prompt }]
     })
 
-    const content = completion.choices[0]?.message?.content || ''
+    let content = completion.choices[0]?.message?.content || ''
+
+    // ── Audit gate ────────────────────────────────────────────────────────────
+    const auditReport = await runAudit(client, model, content, title)
+    let finalContent = content
+    let revised = false
+
+    if (auditReport && auditReport.overall < AUDIT_SCORE_THRESHOLD) {
+      const revisedContent = await reviseContent(client, model, content, auditReport)
+      finalContent = revisedContent
+      revised = true
+    }
 
     let validation
     try {
-      validation = validateContent(content, content_type)
+      validation = validateContent(finalContent, content_type)
     } catch (err) {
       return res.status(422).json({ error: err.message, content_type, title })
     }
 
     const wordCount = validation.word_count
-    const metaDescription = content.replace(/[#*`\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 155)
+    const metaDescription = finalContent.replace(/[#*`\[\]]/g, '').replace(/\s+/g, ' ').trim().slice(0, 155)
     const schema = buildSchema(content_type, title, products, niche)
 
     return res.json({
       content_type,
       title,
-      content,
+      content: finalContent,
       word_count: wordCount,
       meta_description: metaDescription,
       schema,
-      validation
+      validation,
+      audit: auditReport ? {
+        overall: auditReport.overall,
+        scores: auditReport.scores,
+        critical_flags: auditReport.critical_flags,
+        revised,
+        passed: (auditReport.overall >= AUDIT_SCORE_THRESHOLD)
+      } : null
     })
   } catch (err) {
     return res.status(500).json({ error: err.message })

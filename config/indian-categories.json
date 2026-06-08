@@ -1,32 +1,946 @@
 {
-  "earbuds": { "tiers": ["500", "1000", "1500", "2000", "3000", "5000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "wireless earbuds", "flipkart_search": "wireless earbuds" },
-  "headphones": { "tiers": ["1000", "2000", "3000", "5000", "10000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "over ear headphones" },
-  "smartphones": { "tiers": ["8000", "10000", "15000", "20000", "25000", "30000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "smartphones" },
-  "laptops": { "tiers": ["25000", "30000", "40000", "50000", "60000", "80000"], "amazon_path": "computers/ref=zg_bs_nav_computers", "amazon_search": "laptops" },
-  "monitors": { "tiers": ["7000", "10000", "15000", "20000", "30000"], "amazon_path": "computers/ref=zg_bs_nav_computers", "amazon_search": "computer monitors" },
-  "gaming-mice": { "tiers": ["500", "1000", "2000", "3000", "5000"], "amazon_path": "computers/ref=zg_bs_nav_computers", "amazon_search": "gaming mouse" },
-  "mechanical-keyboards": { "tiers": ["1000", "2000", "3000", "5000", "10000"], "amazon_path": "computers/ref=zg_bs_nav_computers", "amazon_search": "mechanical keyboard" },
-  "air-fryers": { "tiers": ["2000", "3000", "5000", "8000"], "amazon_path": "kitchen/ref=zg_bs_nav_kitchen", "amazon_search": "air fryer" },
-  "mixer-grinders": { "tiers": ["1500", "2000", "3000", "5000"], "amazon_path": "kitchen/ref=zg_bs_nav_kitchen", "amazon_search": "mixer grinder" },
-  "kitchen-knives": { "tiers": ["500", "1000", "2000", "3000"], "amazon_path": "kitchen/ref=zg_bs_nav_kitchen", "amazon_search": "kitchen knives" },
-  "pressure-cookers": { "tiers": ["1000", "1500", "2000", "3000"], "amazon_path": "kitchen/ref=zg_bs_nav_kitchen", "amazon_search": "pressure cooker" },
-  "robot-vacuums": { "tiers": ["5000", "10000", "15000", "20000"], "amazon_path": "home/ref=zg_bs_nav_home", "amazon_search": "robot vacuum cleaner" },
-  "ceiling-fans": { "tiers": ["1000", "2000", "3000", "5000"], "amazon_path": "home/ref=zg_bs_nav_home", "amazon_search": "ceiling fan" },
-  "water-purifiers": { "tiers": ["3000", "5000", "8000", "15000"], "amazon_path": "home/ref=zg_bs_nav_home", "amazon_search": "water purifier RO" },
-  "smartwatches": { "tiers": ["1500", "3000", "5000", "10000", "15000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "smartwatch" },
-  "fitness-bands": { "tiers": ["1000", "2000", "3000", "5000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "fitness band tracker" },
-  "power-banks": { "tiers": ["500", "1000", "1500", "2000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "power bank" },
-  "bluetooth-speakers": { "tiers": ["1000", "2000", "3000", "5000", "10000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "bluetooth speaker" },
-  "office-chairs": { "tiers": ["3000", "5000", "8000", "15000", "25000"], "amazon_path": "furniture/ref=zg_bs_nav_furniture", "amazon_search": "ergonomic office chair" },
-  "standing-desks": { "tiers": ["5000", "10000", "15000", "25000"], "amazon_path": "furniture/ref=zg_bs_nav_furniture", "amazon_search": "standing desk" },
-  "webcams": { "tiers": ["1000", "2000", "3000", "5000"], "amazon_path": "computers/ref=zg_bs_nav_computers", "amazon_search": "webcam HD" },
-  "printers": { "tiers": ["3000", "5000", "8000", "15000"], "amazon_path": "computers/ref=zg_bs_nav_computers", "amazon_search": "printer" },
-  "tablets": { "tiers": ["5000", "10000", "15000", "20000", "30000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "tablet" },
-  "electric-scooters": { "tiers": ["30000", "50000", "75000", "100000"], "amazon_path": "sporting-goods/ref=zg_bs_nav_sporting", "amazon_search": "electric scooter" },
-  "blenders": { "tiers": ["1000", "2000", "3000", "5000"], "amazon_path": "kitchen/ref=zg_bs_nav_kitchen", "amazon_search": "blender juicer" },
-  "inverters": { "tiers": ["3000", "5000", "8000", "15000"], "amazon_path": "home/ref=zg_bs_nav_home", "amazon_search": "home inverter UPS" },
-  "security-cameras": { "tiers": ["1000", "2000", "3000", "5000"], "amazon_path": "electronics/ref=zg_bs_nav_electronics", "amazon_search": "security camera CCTV" },
-  "trimmer-shavers": { "tiers": ["500", "1000", "1500", "2000"], "amazon_path": "health/ref=zg_bs_nav_health", "amazon_search": "trimmer shaver men" },
-  "hair-dryers": { "tiers": ["500", "1000", "2000", "3000"], "amazon_path": "health/ref=zg_bs_nav_health", "amazon_search": "hair dryer" },
-  "electric-toothbrushes": { "tiers": ["500", "1000", "2000", "3000"], "amazon_path": "health/ref=zg_bs_nav_health", "amazon_search": "electric toothbrush" }
+  "earbuds": {
+    "label": "Earbuds",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "500",
+      "1000",
+      "1500",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "wireless earbuds TWS",
+    "searches": [
+      "wireless earbuds",
+      "TWS earbuds india",
+      "best earbuds under 2000"
+    ]
+  },
+  "headphones": {
+    "label": "Headphones",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000",
+      "10000"
+    ],
+    "amazon_search": "over ear headphones",
+    "searches": [
+      "over ear headphones",
+      "wireless headphones",
+      "noise cancelling headphones india"
+    ]
+  },
+  "bluetooth-speakers": {
+    "label": "Bluetooth Speakers",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000",
+      "10000"
+    ],
+    "amazon_search": "bluetooth speaker",
+    "searches": [
+      "bluetooth speaker portable",
+      "wireless speaker india",
+      "best bluetooth speaker 2024"
+    ]
+  },
+  "soundbars": {
+    "label": "Soundbars",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "3000",
+      "5000",
+      "10000",
+      "20000"
+    ],
+    "amazon_search": "soundbar home theatre",
+    "searches": [
+      "soundbar for TV",
+      "home theatre soundbar india",
+      "bluetooth soundbar"
+    ]
+  },
+  "smartphones": {
+    "label": "Smartphones",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "8000",
+      "10000",
+      "15000",
+      "20000",
+      "25000",
+      "30000"
+    ],
+    "amazon_search": "smartphones android",
+    "searches": [
+      "smartphone under 15000",
+      "best android phone india",
+      "5G smartphone india 2024"
+    ]
+  },
+  "tablets": {
+    "label": "Tablets",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "5000",
+      "10000",
+      "15000",
+      "20000",
+      "30000"
+    ],
+    "amazon_search": "android tablet",
+    "searches": [
+      "tablet android india",
+      "best tablet under 15000",
+      "drawing tablet"
+    ]
+  },
+  "laptops": {
+    "label": "Laptops",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "25000",
+      "30000",
+      "40000",
+      "50000",
+      "60000",
+      "80000"
+    ],
+    "amazon_search": "laptop computer",
+    "searches": [
+      "laptop under 50000",
+      "best laptop india 2024",
+      "gaming laptop",
+      "ultrabook thin light laptop"
+    ]
+  },
+  "monitors": {
+    "label": "Monitors",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "7000",
+      "10000",
+      "15000",
+      "20000",
+      "30000"
+    ],
+    "amazon_search": "computer monitor display",
+    "searches": [
+      "monitor 24 inch",
+      "gaming monitor 144hz",
+      "best monitor under 10000 india"
+    ]
+  },
+  "keyboards": {
+    "label": "Keyboards",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "3000",
+      "5000",
+      "10000"
+    ],
+    "amazon_search": "mechanical keyboard",
+    "searches": [
+      "mechanical keyboard india",
+      "wireless keyboard",
+      "gaming keyboard rgb"
+    ]
+  },
+  "mice": {
+    "label": "Mice",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "300",
+      "500",
+      "1000",
+      "2000",
+      "3000"
+    ],
+    "amazon_search": "computer mouse wireless",
+    "searches": [
+      "wireless mouse",
+      "gaming mouse india",
+      "ergonomic mouse"
+    ]
+  },
+  "smartwatches": {
+    "label": "Smartwatches",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "1500",
+      "3000",
+      "5000",
+      "10000",
+      "15000"
+    ],
+    "amazon_search": "smartwatch",
+    "searches": [
+      "smartwatch india 2024",
+      "best smartwatch under 3000",
+      "smartwatch AMOLED"
+    ]
+  },
+  "fitness-bands": {
+    "label": "Fitness Bands",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "fitness band tracker",
+    "searches": [
+      "fitness band tracker india",
+      "smart band health tracker",
+      "fitness tracker waterproof"
+    ]
+  },
+  "power-banks": {
+    "label": "Power Banks",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "500",
+      "1000",
+      "1500",
+      "2000",
+      "3000"
+    ],
+    "amazon_search": "power bank",
+    "searches": [
+      "power bank 20000mAh",
+      "fast charging power bank india",
+      "slim power bank"
+    ]
+  },
+  "chargers": {
+    "label": "Chargers",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "300",
+      "500",
+      "1000",
+      "2000"
+    ],
+    "amazon_search": "fast charger USB-C GaN",
+    "searches": [
+      "GaN charger 65W",
+      "USB-C fast charger india",
+      "phone charger adapter"
+    ]
+  },
+  "gaming-mice": {
+    "label": "Gaming Mice",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "gaming mouse",
+    "searches": [
+      "gaming mouse india",
+      "RGB gaming mouse",
+      "wireless gaming mouse"
+    ]
+  },
+  "gaming-keyboards": {
+    "label": "Gaming Keyboards",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000",
+      "10000"
+    ],
+    "amazon_search": "gaming keyboard mechanical",
+    "searches": [
+      "gaming keyboard india",
+      "mechanical gaming keyboard RGB",
+      "tenkeyless gaming keyboard"
+    ]
+  },
+  "gaming-headsets": {
+    "label": "Gaming Headsets",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "gaming headset",
+    "searches": [
+      "gaming headset with mic",
+      "7.1 surround gaming headset india",
+      "wireless gaming headset"
+    ]
+  },
+  "gaming-monitors": {
+    "label": "Gaming Monitors",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "10000",
+      "15000",
+      "20000",
+      "30000",
+      "50000"
+    ],
+    "amazon_search": "gaming monitor 144hz",
+    "searches": [
+      "gaming monitor 144hz india",
+      "165hz gaming monitor",
+      "curved gaming monitor"
+    ]
+  },
+  "cameras": {
+    "label": "Cameras",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "5000",
+      "10000",
+      "20000",
+      "30000",
+      "50000"
+    ],
+    "amazon_search": "digital camera DSLR mirrorless",
+    "searches": [
+      "mirrorless camera india",
+      "DSLR camera for beginners",
+      "point and shoot camera"
+    ]
+  },
+  "action-cameras": {
+    "label": "Action Cameras",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "3000",
+      "5000",
+      "10000",
+      "20000"
+    ],
+    "amazon_search": "action camera 4K",
+    "searches": [
+      "action camera 4K india",
+      "GoPro alternatives india",
+      "waterproof action camera"
+    ]
+  },
+  "routers": {
+    "label": "Routers",
+    "tier": 1,
+    "group": "Consumer Electronics",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000",
+      "10000"
+    ],
+    "amazon_search": "WiFi router",
+    "searches": [
+      "WiFi router india",
+      "mesh WiFi router",
+      "dual band router"
+    ]
+  },
+  "smart-lights": {
+    "label": "Smart Lights",
+    "tier": 2,
+    "group": "Smart Home",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "3000"
+    ],
+    "amazon_search": "smart LED bulb wifi",
+    "searches": [
+      "smart LED bulb alexa google",
+      "WiFi smart light india",
+      "color changing smart bulb"
+    ]
+  },
+  "smart-plugs": {
+    "label": "Smart Plugs",
+    "tier": 2,
+    "group": "Smart Home",
+    "tiers": [
+      "500",
+      "1000",
+      "2000"
+    ],
+    "amazon_search": "smart plug wifi",
+    "searches": [
+      "smart plug wifi india",
+      "alexa smart plug",
+      "smart socket timer"
+    ]
+  },
+  "smart-cameras": {
+    "label": "Smart Cameras",
+    "tier": 2,
+    "group": "Smart Home",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "smart home security camera wifi",
+    "searches": [
+      "indoor security camera wifi",
+      "smart camera alexa india",
+      "baby monitor camera wifi"
+    ]
+  },
+  "smart-locks": {
+    "label": "Smart Locks",
+    "tier": 2,
+    "group": "Smart Home",
+    "tiers": [
+      "3000",
+      "5000",
+      "10000",
+      "15000"
+    ],
+    "amazon_search": "smart door lock fingerprint",
+    "searches": [
+      "smart door lock india",
+      "fingerprint door lock",
+      "digital door lock"
+    ]
+  },
+  "smart-switches": {
+    "label": "Smart Switches",
+    "tier": 2,
+    "group": "Smart Home",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "3000"
+    ],
+    "amazon_search": "smart wifi switch",
+    "searches": [
+      "smart switch wifi india",
+      "alexa touch switch",
+      "smart light switch"
+    ]
+  },
+  "air-purifiers": {
+    "label": "Air Purifiers",
+    "tier": 2,
+    "group": "Home Technology",
+    "tiers": [
+      "3000",
+      "5000",
+      "8000",
+      "15000",
+      "25000"
+    ],
+    "amazon_search": "air purifier HEPA",
+    "searches": [
+      "air purifier HEPA india",
+      "best air purifier for room",
+      "Mi air purifier alternatives"
+    ]
+  },
+  "water-purifiers": {
+    "label": "Water Purifiers",
+    "tier": 2,
+    "group": "Home Technology",
+    "tiers": [
+      "3000",
+      "5000",
+      "8000",
+      "15000"
+    ],
+    "amazon_search": "water purifier RO UV",
+    "searches": [
+      "RO water purifier india",
+      "UV water purifier",
+      "best water purifier 2024"
+    ]
+  },
+  "robot-vacuums": {
+    "label": "Robot Vacuums",
+    "tier": 2,
+    "group": "Home Technology",
+    "tiers": [
+      "5000",
+      "10000",
+      "15000",
+      "20000",
+      "30000"
+    ],
+    "amazon_search": "robot vacuum cleaner",
+    "searches": [
+      "robot vacuum cleaner india",
+      "automatic vacuum robot mop",
+      "best robot vacuum under 15000"
+    ]
+  },
+  "air-fryers": {
+    "label": "Air Fryers",
+    "tier": 3,
+    "group": "Home Appliances",
+    "tiers": [
+      "2000",
+      "3000",
+      "5000",
+      "8000"
+    ],
+    "amazon_search": "air fryer",
+    "searches": [
+      "air fryer india 2024",
+      "digital air fryer 4L",
+      "best air fryer under 5000"
+    ]
+  },
+  "mixer-grinders": {
+    "label": "Mixer Grinders",
+    "tier": 3,
+    "group": "Home Appliances",
+    "tiers": [
+      "1500",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "mixer grinder",
+    "searches": [
+      "mixer grinder india 750W",
+      "best mixer grinder 2024",
+      "juicer mixer grinder"
+    ]
+  },
+  "coffee-machines": {
+    "label": "Coffee Machines",
+    "tier": 3,
+    "group": "Home Appliances",
+    "tiers": [
+      "2000",
+      "5000",
+      "10000",
+      "20000"
+    ],
+    "amazon_search": "coffee maker machine espresso",
+    "searches": [
+      "coffee maker india",
+      "espresso machine home",
+      "drip coffee maker"
+    ]
+  },
+  "vacuum-cleaners": {
+    "label": "Vacuum Cleaners",
+    "tier": 3,
+    "group": "Home Appliances",
+    "tiers": [
+      "2000",
+      "5000",
+      "10000",
+      "20000"
+    ],
+    "amazon_search": "vacuum cleaner",
+    "searches": [
+      "vacuum cleaner india",
+      "cordless vacuum cleaner",
+      "wet dry vacuum cleaner"
+    ]
+  },
+  "refrigerators": {
+    "label": "Refrigerators",
+    "tier": 3,
+    "group": "Home Appliances",
+    "tiers": [
+      "10000",
+      "15000",
+      "20000",
+      "30000",
+      "50000"
+    ],
+    "amazon_search": "refrigerator double door",
+    "searches": [
+      "refrigerator india 2024",
+      "double door refrigerator frost free",
+      "single door fridge"
+    ]
+  },
+  "washing-machines": {
+    "label": "Washing Machines",
+    "tier": 3,
+    "group": "Home Appliances",
+    "tiers": [
+      "8000",
+      "12000",
+      "20000",
+      "30000"
+    ],
+    "amazon_search": "washing machine fully automatic",
+    "searches": [
+      "washing machine fully automatic india",
+      "front load washing machine",
+      "top load washing machine 7kg"
+    ]
+  },
+  "air-conditioners": {
+    "label": "Air Conditioners",
+    "tier": 3,
+    "group": "Home Appliances",
+    "tiers": [
+      "20000",
+      "30000",
+      "40000",
+      "60000"
+    ],
+    "amazon_search": "split air conditioner AC inverter",
+    "searches": [
+      "split AC 1.5 ton inverter india",
+      "best AC 2024 india",
+      "window AC"
+    ]
+  },
+  "office-chairs": {
+    "label": "Office Chairs",
+    "tier": 4,
+    "group": "Office & Productivity",
+    "tiers": [
+      "3000",
+      "5000",
+      "8000",
+      "15000",
+      "25000"
+    ],
+    "amazon_search": "ergonomic office chair",
+    "searches": [
+      "ergonomic office chair india",
+      "mesh back office chair",
+      "gaming chair desk chair"
+    ]
+  },
+  "standing-desks": {
+    "label": "Standing Desks",
+    "tier": 4,
+    "group": "Office & Productivity",
+    "tiers": [
+      "5000",
+      "10000",
+      "15000",
+      "25000"
+    ],
+    "amazon_search": "standing desk height adjustable",
+    "searches": [
+      "standing desk india",
+      "height adjustable desk electric",
+      "sit stand desk"
+    ]
+  },
+  "monitor-arms": {
+    "label": "Monitor Arms",
+    "tier": 4,
+    "group": "Office & Productivity",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "monitor arm stand",
+    "searches": [
+      "monitor arm desk mount india",
+      "dual monitor arm",
+      "adjustable monitor stand"
+    ]
+  },
+  "webcams": {
+    "label": "Webcams",
+    "tier": 4,
+    "group": "Office & Productivity",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "webcam HD 1080p",
+    "searches": [
+      "webcam for laptop india",
+      "1080p webcam autofocus",
+      "4K webcam streaming"
+    ]
+  },
+  "microphones": {
+    "label": "Microphones",
+    "tier": 4,
+    "group": "Office & Productivity",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000",
+      "10000"
+    ],
+    "amazon_search": "USB microphone condenser",
+    "searches": [
+      "USB microphone for PC india",
+      "condenser mic recording",
+      "streaming microphone"
+    ]
+  },
+  "smart-scales": {
+    "label": "Smart Scales",
+    "tier": 5,
+    "group": "Fitness & Health Tech",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000"
+    ],
+    "amazon_search": "smart weighing scale body fat",
+    "searches": [
+      "smart scale body fat BMI india",
+      "digital weighing scale bluetooth",
+      "body composition scale"
+    ]
+  },
+  "treadmills": {
+    "label": "Treadmills",
+    "tier": 5,
+    "group": "Fitness & Health Tech",
+    "tiers": [
+      "15000",
+      "25000",
+      "40000",
+      "60000"
+    ],
+    "amazon_search": "treadmill home",
+    "searches": [
+      "treadmill for home india",
+      "foldable treadmill motorized",
+      "manual treadmill"
+    ]
+  },
+  "exercise-bikes": {
+    "label": "Exercise Bikes",
+    "tier": 5,
+    "group": "Fitness & Health Tech",
+    "tiers": [
+      "5000",
+      "10000",
+      "20000",
+      "30000"
+    ],
+    "amazon_search": "exercise cycle bike stationary",
+    "searches": [
+      "exercise bike stationary india",
+      "spin bike home gym",
+      "upright cycle fitness"
+    ]
+  },
+  "massage-guns": {
+    "label": "Massage Guns",
+    "tier": 5,
+    "group": "Fitness & Health Tech",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000",
+      "10000"
+    ],
+    "amazon_search": "massage gun percussion",
+    "searches": [
+      "massage gun india",
+      "percussion massager muscle recovery",
+      "mini massage gun"
+    ]
+  },
+  "backpacks": {
+    "label": "Backpacks",
+    "tier": 6,
+    "group": "Travel Gear",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "laptop backpack travel",
+    "searches": [
+      "laptop backpack india",
+      "travel backpack waterproof",
+      "school college backpack"
+    ]
+  },
+  "luggage": {
+    "label": "Luggage",
+    "tier": 6,
+    "group": "Travel Gear",
+    "tiers": [
+      "2000",
+      "4000",
+      "8000",
+      "15000"
+    ],
+    "amazon_search": "trolley luggage suitcase",
+    "searches": [
+      "trolley bag luggage india",
+      "cabin size luggage 20 inch",
+      "hard shell suitcase"
+    ]
+  },
+  "travel-adapters": {
+    "label": "Travel Adapters",
+    "tier": 6,
+    "group": "Travel Gear",
+    "tiers": [
+      "300",
+      "500",
+      "1000",
+      "2000"
+    ],
+    "amazon_search": "universal travel adapter",
+    "searches": [
+      "universal travel adapter india",
+      "world travel adapter plug",
+      "USB travel charger adapter"
+    ]
+  },
+  "induction-cooktops": {
+    "label": "Induction Cooktops",
+    "tier": 3,
+    "group": "Kitchen Appliances",
+    "tiers": [
+      "1000",
+      "2000",
+      "3000",
+      "5000"
+    ],
+    "amazon_search": "induction cooktop",
+    "searches": [
+      "induction cooktop india",
+      "induction stove 2000W",
+      "best induction cooktop under 2000"
+    ]
+  },
+  "electric-kettles": {
+    "label": "Electric Kettles",
+    "tier": 3,
+    "group": "Kitchen Appliances",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "3000"
+    ],
+    "amazon_search": "electric kettle",
+    "searches": [
+      "electric kettle india",
+      "stainless steel kettle",
+      "electric kettle with temperature control"
+    ]
+  },
+  "food-processors": {
+    "label": "Food Processors",
+    "tier": 3,
+    "group": "Kitchen Appliances",
+    "tiers": [
+      "2000",
+      "4000",
+      "6000",
+      "10000"
+    ],
+    "amazon_search": "food processor",
+    "searches": [
+      "food processor india",
+      "kitchen food processor",
+      "food processor with attachments"
+    ]
+  },
+  "hand-blenders": {
+    "label": "Hand Blenders",
+    "tier": 3,
+    "group": "Kitchen Appliances",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "4000"
+    ],
+    "amazon_search": "hand blender",
+    "searches": [
+      "hand blender india",
+      "immersion blender",
+      "stick blender with chopper"
+    ]
+  },
+  "sandwich-makers": {
+    "label": "Sandwich Makers",
+    "tier": 3,
+    "group": "Kitchen Appliances",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "3000"
+    ],
+    "amazon_search": "sandwich maker",
+    "searches": [
+      "sandwich maker india",
+      "sandwich toaster",
+      "grill sandwich maker"
+    ]
+  },
+  "rice-cookers": {
+    "label": "Rice Cookers",
+    "tier": 3,
+    "group": "Kitchen Appliances",
+    "tiers": [
+      "500",
+      "1000",
+      "2000",
+      "4000"
+    ],
+    "amazon_search": "electric rice cooker",
+    "searches": [
+      "electric rice cooker india",
+      "rice cooker with steamer",
+      "automatic rice cooker"
+    ]
+  }
 }
