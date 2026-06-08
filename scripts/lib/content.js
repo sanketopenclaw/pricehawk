@@ -256,6 +256,21 @@ ${links.map(l => `<span style="font-size:14px;">${l}</span>`).join('\n')}
 </div>`
 }
 
+function metaDescription(name, catLabel, specs, seg) {
+  const wattage  = getSpecVal(specs, 'Output Wattage', 'Wattage', 'Wattage Rating')
+  const capacity = getSpecVal(specs, 'Capacity', 'Volume', 'Bowl Capacity', 'Jug Capacity')
+  const segWord  = { budget: 'affordable', 'mid-range': 'mid-range', premium: 'premium', flagship: 'flagship' }[seg] || 'popular'
+
+  const specPart = [wattage, capacity].filter(Boolean).join(', ')
+  const base = specPart
+    ? `${name} — ${specPart} ${catLabel.toLowerCase()} for Indian homes.`
+    : `${name} — ${segWord} ${catLabel.toLowerCase()} for Indian homes.`
+
+  const suffix = ' Read our full spec breakdown, price trend, and verdict.'
+  const desc = base + suffix
+  return desc.length > 160 ? desc.substring(0, 157) + '…' : desc
+}
+
 module.exports = {
   resolveOffer,
   specTable,
@@ -270,4 +285,5 @@ module.exports = {
   topValueProduct,
   buildSlugIndex,
   relatedLinks,
+  metaDescription,
 }

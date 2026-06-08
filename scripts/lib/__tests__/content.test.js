@@ -8,7 +8,7 @@ const {
   resolveOffer, specTable, featureHighlights,
   familySizeFromCapacity, getSpecVal, sparklineSVG,
   bestValueScore, topValueProduct,
-  buildSlugIndex, relatedLinks,
+  buildSlugIndex, relatedLinks, metaDescription,
 } = require('../content')
 
 test('specTable renders rows from specifications', () => {
@@ -288,4 +288,17 @@ test('relatedLinks returns non-empty string even with unknown ASIN (hub fallback
   const html = relatedLinks('BUNKNOWN', 'coffee-machines', {}, 'Coffee Machine')
   assert.ok(html.length > 0)
   assert.ok(html.includes('/best-coffee-machines/'))
+})
+
+test('metaDescription includes product name and catLabel', () => {
+  const desc = metaDescription('AGARO Galaxy', 'Air Fryer', { 'Output Wattage': '1400W', 'Capacity': '4.5 litres' }, 'mid-range')
+  assert.ok(desc.includes('AGARO Galaxy'))
+  assert.ok(desc.includes('Air Fryer') || desc.includes('air fryer'))
+  assert.ok(desc.length <= 160)
+})
+
+test('metaDescription stays under 160 chars for long names', () => {
+  const longName = 'A'.repeat(100)
+  const desc = metaDescription(longName, 'Air Fryer', {}, 'budget')
+  assert.ok(desc.length <= 160)
 })

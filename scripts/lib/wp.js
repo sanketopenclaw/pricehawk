@@ -18,10 +18,14 @@ async function wpFindPage(slug, { wp, auth }) {
   } catch { return null }
 }
 
-async function wpUpsertPage({ title, slug, content }, { wp, auth, dryRun }) {
+async function wpUpsertPage({ title, slug, content }, { wp, auth, dryRun, metaDesc }) {
   if (dryRun) { console.log(`    [dry] ${slug}`); return null }
   const existing = await wpFindPage(slug, { wp, auth })
-  const payload = { title, content, slug, status: 'draft', comment_status: 'closed' }
+  const payload = {
+    title, content, slug, status: 'draft', comment_status: 'closed',
+    excerpt: metaDesc || '',
+    meta: metaDesc ? { _yoast_wpseo_metadesc: metaDesc } : {},
+  }
   try {
     if (existing) {
       const r = await axios.post(`${wp}/wp-json/wp/v2/pages/${existing.id}`, payload, { headers: auth })
