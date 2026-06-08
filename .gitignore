@@ -3,4 +3,5 @@ node_modules/
 data/opportunities/
 data/products/
 data/drafts/
+tmp/
 *.log
