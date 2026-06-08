@@ -138,8 +138,11 @@ function buildProductCard(product, catSlug, position) {
 
   const topFeature = features[0] || null
 
+  const seg = product.price_segment || product._legacy?.price_segment || null
+  const segLabel = seg ? seg.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : null
+
   return `<div style="border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;margin-bottom:16px;">
-  <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">#${position} · ${brand}</p>
+  <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">#${position} · ${brand}${segLabel ? ` · ${segLabel}` : ''}</p>
   <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;line-height:1.4;">${shortName(name, 70)}</h3>
   ${specBits.length ? `<p style="font-size:13px;color:#555;margin:0 0 8px;">${specBits.join(' · ')}</p>` : ''}
   ${topFeature ? `<p style="font-size:13px;color:#333;margin:0 0 12px;font-style:italic;">"${topFeature}"</p>` : ''}

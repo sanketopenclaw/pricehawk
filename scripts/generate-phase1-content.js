@@ -184,7 +184,7 @@ ${factorItems}
 <p style="font-size:12px;color:#999;line-height:1.6;">Prices on Amazon India change frequently. Click "Check price on Amazon" to see the current price. PriceHawk is not responsible for price changes after page publication.</p>
 
 <script type="application/ld+json">
-${JSON.stringify(schema, null, 2)}
+${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
 </script>`
 }
 
@@ -234,7 +234,7 @@ ${productRows}
 <p><a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← Back to Best ${catLabel} in India ${YEAR}</a></p>
 
 <script type="application/ld+json">
-${JSON.stringify(schema, null, 2)}
+${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
 </script>`
 }
 
