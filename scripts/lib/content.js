@@ -127,6 +127,135 @@ function topValueProduct(products) {
   , products[0])
 }
 
+// ---------------------------------------------------------------------------
+// Internal linking helpers
+// ---------------------------------------------------------------------------
+
+// Mirrors the slugify used in scripts/lib/schema.js
+function _slugify(s) {
+  return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+// Derive the buying-guide slug from a queue entry, matching generate-buying-guides.js logic:
+//   best-{catSlug}                         (no subtype / decision)
+//   best-{catSlug}-budget                  (subtype === 'budget')
+//   best-{catSlug}-{slugified-use_case}    (subtype === 'use_case', has use_case field)
+function _guideSlug(op) {
+  const base = `best-${op.category}`
+  if (op.subtype === 'budget') return `${base}-budget`
+  if (op.subtype === 'use_case' && op.use_case) return `${base}-${_slugify(op.use_case)}`
+  return base
+}
+
+/**
+ * Build a lookup index from a parsed phase1_queue.json array.
+ *
+ * Returns an object with:
+ *   index[asin]  → { reviewSlug, comparisonSlugs[], catSlug }
+ *   index['__hub__' + catSlug]   → slug string  (from category_page entries)
+ *   index['__guide__' + catSlug] → slug string  (from buying_guide entries — first/base one)
+ *
+ * Comparison entries in the queue have `asins` but no `brands`, so comparison
+ * slugs fall back to 'product' for both brand placeholders.  The generators
+ * resolve real brand_id values from the product DB at write-time, so these
+ * fallback slugs may differ from published URLs.  They are stored anyway so
+ * relatedLinks can surface at least the right shape of link.
+ */
+function buildSlugIndex(queueData) {
+  const index = {}
+
+  for (const op of queueData) {
+    // ---- review ----
+    if (op.type === 'review' && op.asin) {
+      const brand = _slugify(op.brand || 'product')
+      const asin  = op.asin.toLowerCase()
+      if (!index[op.asin]) {
+        index[op.asin] = { reviewSlug: null, comparisonSlugs: [], catSlug: op.category }
+      }
+      index[op.asin].reviewSlug = `review-${brand}-${asin}`
+    }
+
+    // ---- comparison ----
+    // Queue has asins[] but no brands[] — fall back to 'product' for both sides
+    if (op.type === 'comparison' && Array.isArray(op.asins) && op.asins.length >= 2) {
+      const [a1, a2] = op.asins
+      const b1 = _slugify(op.brands?.[0] || 'product')
+      const b2 = _slugify(op.brands?.[1] || 'product')
+      const slug = `compare-${b1}-${a1.toLowerCase()}-vs-${b2}-${a2.toLowerCase()}`
+      for (const asin of [a1, a2]) {
+        if (!index[asin]) {
+          index[asin] = { reviewSlug: null, comparisonSlugs: [], catSlug: op.category }
+        }
+        index[asin].comparisonSlugs.push(slug)
+      }
+    }
+
+    // ---- buying_guide — store the base (non-subtyped) slug per category ----
+    if (op.type === 'buying_guide' && op.category) {
+      const key = '__guide__' + op.category
+      // Prefer the base guide (no subtype) so the link title stays generic
+      if (!index[key] || (!op.subtype)) {
+        index[key] = _guideSlug(op)
+      }
+    }
+
+    // ---- category_page → hub ----
+    if (op.type === 'category_page' && op.category) {
+      const key = '__hub__' + op.category
+      if (!index[key]) {
+        index[key] = `best-${op.category}`
+      }
+    }
+  }
+
+  return index
+}
+
+/**
+ * Build an HTML "Related Pages" section for a product page.
+ *
+ * @param {string} asin       - The product ASIN
+ * @param {string} catSlug    - Category slug, e.g. 'air-fryers'
+ * @param {object} slugIndex  - Result of buildSlugIndex()
+ * @param {string} catLabel   - Human-readable label, e.g. 'Air Fryer'
+ * @returns {string} HTML string, or '' if nothing to link
+ */
+function relatedLinks(asin, catSlug, slugIndex, catLabel) {
+  const links = []
+  const entry = slugIndex[asin] || {}
+
+  // Always link to category hub (fallback if not in index)
+  const hubSlug = slugIndex['__hub__' + catSlug] || `best-${catSlug}`
+  links.push(
+    `<a href="/${hubSlug}/" style="color:#e65100;text-decoration:none;font-weight:600;">Best ${catLabel}s in India →</a>`
+  )
+
+  // Link to buying guide only when it differs from the hub (avoids duplicate link)
+  const guideSlug = slugIndex['__guide__' + catSlug]
+  if (guideSlug && guideSlug !== hubSlug) {
+    links.push(
+      `<a href="/${guideSlug}/" style="color:#e65100;text-decoration:none;font-weight:600;">${catLabel} Buying Guide →</a>`
+    )
+  }
+
+  // Up to 2 comparison pages featuring this product
+  const compSlugs = (entry.comparisonSlugs || []).slice(0, 2)
+  for (const slug of compSlugs) {
+    links.push(
+      `<a href="/${slug}/" style="color:#1565c0;text-decoration:none;">Compare options →</a>`
+    )
+  }
+
+  if (!links.length) return ''
+
+  return `<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:6px;padding:14px 18px;margin:24px 0;">
+<p style="font-size:13px;font-weight:700;color:#444;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">Related Pages</p>
+<div style="display:flex;flex-wrap:wrap;gap:10px 20px;">
+${links.map(l => `<span style="font-size:14px;">${l}</span>`).join('\n')}
+</div>
+</div>`
+}
+
 module.exports = {
   resolveOffer,
   specTable,
@@ -139,4 +268,6 @@ module.exports = {
   sparklineSVG,
   bestValueScore,
   topValueProduct,
+  buildSlugIndex,
+  relatedLinks,
 }

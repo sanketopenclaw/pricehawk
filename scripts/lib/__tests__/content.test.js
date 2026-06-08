@@ -8,6 +8,7 @@ const {
   resolveOffer, specTable, featureHighlights,
   familySizeFromCapacity, getSpecVal, sparklineSVG,
   bestValueScore, topValueProduct,
+  buildSlugIndex, relatedLinks,
 } = require('../content')
 
 test('specTable renders rows from specifications', () => {
@@ -131,4 +132,160 @@ test('topValueProduct returns product with highest score', () => {
 
 test('topValueProduct returns null for empty array', () => {
   assert.strictEqual(topValueProduct([]), null)
+})
+
+// ---------------------------------------------------------------------------
+// buildSlugIndex
+// ---------------------------------------------------------------------------
+
+test('buildSlugIndex indexes review slugs by asin', () => {
+  const queue = [
+    { type: 'review', asin: 'B001XXXXX', brand: 'agaro', category: 'air-fryers' }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.strictEqual(idx['B001XXXXX'].reviewSlug, 'review-agaro-b001xxxxx')
+})
+
+test('buildSlugIndex normalises brand with spaces/uppercase in review slug', () => {
+  const queue = [
+    { type: 'review', asin: 'B002', brand: 'Philips India', category: 'air-fryers' }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.strictEqual(idx['B002'].reviewSlug, 'review-philips-india-b002')
+})
+
+test('buildSlugIndex indexes comparison slugs for both asins (no brands in queue)', () => {
+  const queue = [
+    { type: 'comparison', asins: ['B001', 'B002'], category: 'air-fryers' }
+  ]
+  const idx = buildSlugIndex(queue)
+  // Both ASINs get an entry
+  assert.ok(Array.isArray(idx['B001'].comparisonSlugs))
+  assert.ok(Array.isArray(idx['B002'].comparisonSlugs))
+  // Falls back to 'product' for both brand slots
+  assert.ok(idx['B001'].comparisonSlugs[0].includes('compare-product-b001-vs-product-b002'))
+  assert.ok(idx['B002'].comparisonSlugs[0].includes('compare-product-b001-vs-product-b002'))
+})
+
+test('buildSlugIndex uses brands array when present in comparison', () => {
+  const queue = [
+    { type: 'comparison', asins: ['B001', 'B002'], brands: ['philips', 'bajaj'], category: 'air-fryers' }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.ok(idx['B001'].comparisonSlugs.some(s => s === 'compare-philips-b001-vs-bajaj-b002'))
+  assert.ok(idx['B002'].comparisonSlugs.some(s => s === 'compare-philips-b001-vs-bajaj-b002'))
+})
+
+test('buildSlugIndex stores category_page as hub', () => {
+  const queue = [
+    { type: 'category_page', category: 'air-fryers' }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.strictEqual(idx['__hub__air-fryers'], 'best-air-fryers')
+})
+
+test('buildSlugIndex stores buying_guide base slug', () => {
+  const queue = [
+    { type: 'buying_guide', category: 'air-fryers', subtype: null }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.strictEqual(idx['__guide__air-fryers'], 'best-air-fryers')
+})
+
+test('buildSlugIndex stores buying_guide budget slug', () => {
+  const queue = [
+    { type: 'buying_guide', category: 'air-fryers', subtype: 'budget' }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.strictEqual(idx['__guide__air-fryers'], 'best-air-fryers-budget')
+})
+
+test('buildSlugIndex prefers base (no subtype) guide slug over budget', () => {
+  const queue = [
+    { type: 'buying_guide', category: 'air-fryers', subtype: 'budget' },
+    { type: 'buying_guide', category: 'air-fryers', subtype: null }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.strictEqual(idx['__guide__air-fryers'], 'best-air-fryers')
+})
+
+test('buildSlugIndex stores use_case buying_guide slug', () => {
+  const queue = [
+    { type: 'buying_guide', category: 'food-processors', subtype: 'use_case', use_case: 'Small Families' }
+  ]
+  const idx = buildSlugIndex(queue)
+  assert.strictEqual(idx['__guide__food-processors'], 'best-food-processors-small-families')
+})
+
+test('buildSlugIndex ignores comparison entries with missing asins', () => {
+  const queue = [
+    { type: 'comparison', category: 'air-fryers' }
+  ]
+  const idx = buildSlugIndex(queue)
+  // No ASIN keys added
+  assert.strictEqual(Object.keys(idx).length, 0)
+})
+
+// ---------------------------------------------------------------------------
+// relatedLinks
+// ---------------------------------------------------------------------------
+
+test('relatedLinks returns HTML with category hub link', () => {
+  const slugIndex = {
+    'B001': { reviewSlug: 'review-agaro-b001', comparisonSlugs: [], catSlug: 'air-fryers' },
+    '__hub__air-fryers': 'best-air-fryers',
+  }
+  const html = relatedLinks('B001', 'air-fryers', slugIndex, 'Air Fryer')
+  assert.ok(html.includes('best-air-fryers'))
+  assert.ok(html.includes('Best Air Fryers in India'))
+})
+
+test('relatedLinks uses fallback hub slug when not in index', () => {
+  const html = relatedLinks('BXXX', 'air-fryers', {}, 'Air Fryer')
+  assert.ok(html.includes('/best-air-fryers/'))
+  assert.ok(html.includes('Best Air Fryers in India'))
+})
+
+test('relatedLinks includes buying guide link when distinct from hub', () => {
+  const slugIndex = {
+    '__hub__air-fryers': 'best-air-fryers',
+    '__guide__air-fryers': 'best-air-fryers-budget',
+  }
+  const html = relatedLinks('BXXX', 'air-fryers', slugIndex, 'Air Fryer')
+  assert.ok(html.includes('/best-air-fryers-budget/'))
+  assert.ok(html.includes('Air Fryer Buying Guide'))
+})
+
+test('relatedLinks omits buying guide link when same as hub', () => {
+  const slugIndex = {
+    '__hub__air-fryers': 'best-air-fryers',
+    '__guide__air-fryers': 'best-air-fryers',
+  }
+  const html = relatedLinks('BXXX', 'air-fryers', slugIndex, 'Air Fryer')
+  // Should not have a duplicate link — only one occurrence of best-air-fryers href
+  const matches = (html.match(/href="\/best-air-fryers\/"/g) || []).length
+  assert.strictEqual(matches, 1)
+})
+
+test('relatedLinks includes up to 2 comparison links', () => {
+  const slugIndex = {
+    'B001': {
+      comparisonSlugs: [
+        'compare-product-b001-vs-product-b002',
+        'compare-product-b001-vs-product-b003',
+        'compare-product-b001-vs-product-b004',
+      ]
+    },
+    '__hub__air-fryers': 'best-air-fryers',
+  }
+  const html = relatedLinks('B001', 'air-fryers', slugIndex, 'Air Fryer')
+  assert.ok(html.includes('compare-product-b001-vs-product-b002'))
+  assert.ok(html.includes('compare-product-b001-vs-product-b003'))
+  assert.ok(!html.includes('compare-product-b001-vs-product-b004'))
+})
+
+test('relatedLinks returns non-empty string even with unknown ASIN (hub fallback)', () => {
+  const html = relatedLinks('BUNKNOWN', 'coffee-machines', {}, 'Coffee Machine')
+  assert.ok(html.length > 0)
+  assert.ok(html.includes('/best-coffee-machines/'))
 })
