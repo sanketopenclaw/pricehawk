@@ -220,6 +220,16 @@ ${whoHTML}
 
 ${methodologyBlock(methodCtx)}
 
+<div style="background:#e3f2fd;border:1px solid #bbdefb;border-radius:6px;padding:14px 20px;margin:24px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:180px;">
+    <p style="margin:0;font-size:14px;font-weight:700;color:#1565c0;">Track this price automatically</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#444;">Get an email when this product hits its lowest tracked price on Amazon India.</p>
+  </div>
+  <a href="/get-price-alerts/" style="display:inline-block;background:#1565c0;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:9px 18px;border-radius:4px;white-space:nowrap;">
+    Set up price alert →
+  </a>
+</div>
+
 <div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:6px;padding:16px 20px;margin:24px 0;">
   <p style="margin:0 0 10px;font-weight:700;font-size:15px;">Ready to buy or want to check the latest price?</p>
   <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
