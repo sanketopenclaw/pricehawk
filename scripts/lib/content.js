@@ -100,6 +100,33 @@ function sparklineSVG(productId, priceSeriesDir) {
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:inline-block;vertical-align:middle;" aria-hidden="true"><polyline points="${coords}" fill="none" stroke="${trend}" stroke-width="1.5" stroke-linejoin="round"/></svg>`
 }
 
+function bestValueScore(product) {
+  const specs = product.specifications || {}
+  const segOrder = { budget: 4, 'mid-range': 3, premium: 2, flagship: 1 }
+  const seg = product.price_segment || product._legacy?.price_segment || 'mid-range'
+  const segScore = segOrder[seg] || 2  // higher score for budget (more value relative to cost)
+
+  const wStr = getSpecVal(specs, 'Output Wattage', 'Wattage', 'Wattage Rating') || ''
+  const cStr = getSpecVal(specs, 'Capacity', 'Volume', 'Bowl Capacity', 'Jug Capacity') || ''
+  const w = parseFloat(wStr.replace(/[^0-9.]/g, '')) || 0
+  const c = parseFloat(cStr.replace(/[^0-9.]/g, '')) || 0
+  const featureCount = Array.isArray(specs._features) ? specs._features.length : 0
+
+  // Normalised components — wattage capped at 2000W, capacity at 8L, features at 10
+  const wNorm = Math.min(w / 2000, 1) * 40
+  const cNorm = Math.min(c / 8, 1) * 30
+  const fNorm = Math.min(featureCount / 10, 1) * 10
+  // segScore: budget products score 4x, flagship 1x
+  return (wNorm + cNorm + fNorm) * segScore
+}
+
+function topValueProduct(products) {
+  if (!products || !products.length) return null
+  return products.reduce((best, p) =>
+    bestValueScore(p) > bestValueScore(best) ? p : best
+  , products[0])
+}
+
 module.exports = {
   resolveOffer,
   specTable,
@@ -110,4 +137,6 @@ module.exports = {
   methodologyBlock,
   loadProducts,
   sparklineSVG,
+  bestValueScore,
+  topValueProduct,
 }

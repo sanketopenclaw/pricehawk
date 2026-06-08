@@ -7,6 +7,7 @@ const fs = require('fs')
 const {
   resolveOffer, specTable, featureHighlights,
   familySizeFromCapacity, getSpecVal, sparklineSVG,
+  bestValueScore, topValueProduct,
 } = require('../content')
 
 test('specTable renders rows from specifications', () => {
@@ -110,4 +111,24 @@ test('sparklineSVG returns SVG for valid price series', () => {
   assert.ok(svg.includes('<svg'))
   assert.ok(svg.includes('<polyline'))
   fs.unlinkSync(tmpFile)
+})
+
+test('bestValueScore returns higher score for budget products with good specs', () => {
+  const budget = { price_segment: 'budget', specifications: { 'Output Wattage': '1500W', 'Capacity': '4 litres', _features: ['f1','f2','f3'] } }
+  const premium = { price_segment: 'premium', specifications: { 'Output Wattage': '1500W', 'Capacity': '4 litres', _features: ['f1','f2','f3'] } }
+  assert.ok(bestValueScore(budget) > bestValueScore(premium))
+})
+
+test('bestValueScore returns 0 for product with no spec data', () => {
+  assert.strictEqual(bestValueScore({ price_segment: 'mid-range', specifications: {} }), 0)
+})
+
+test('topValueProduct returns product with highest score', () => {
+  const p1 = { price_segment: 'budget', specifications: { 'Output Wattage': '1500W', 'Capacity': '4 litres', _features: ['a','b','c'] } }
+  const p2 = { price_segment: 'flagship', specifications: { 'Output Wattage': '500W', 'Capacity': '1 litre', _features: [] } }
+  assert.strictEqual(topValueProduct([p1, p2]), p1)
+})
+
+test('topValueProduct returns null for empty array', () => {
+  assert.strictEqual(topValueProduct([]), null)
 })
