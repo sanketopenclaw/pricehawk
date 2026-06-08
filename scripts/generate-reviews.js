@@ -107,12 +107,22 @@ function buildIntro(name, specs, catLabel, seg) {
   const maxT     = getSpecVal(specs, 'Max Temperature Setting', 'Maximum Temperature')
 
   const parts = []
-  if (capacity && wattage) parts.push(`a ${capacity}, ${wattage} ${catLabel.toLowerCase()}`)
-  else if (capacity) parts.push(`a ${capacity} ${catLabel.toLowerCase()}`)
-  else if (wattage)  parts.push(`a ${wattage} ${catLabel.toLowerCase()}`)
-  else parts.push(`a ${catLabel.toLowerCase()}`)
+  const article = (str) => /^[aeiou]/.test(str) ? 'an' : 'a'
+  if (capacity && wattage) parts.push(`${article(capacity)} ${capacity}, ${wattage} ${catLabel.toLowerCase()}`)
+  else if (capacity) parts.push(`${article(capacity)} ${capacity} ${catLabel.toLowerCase()}`)
+  else if (wattage)  {
+    const w = wattage.toLowerCase()
+    parts.push(`${article(w)} ${w} ${catLabel.toLowerCase()}`)
+  }
+  else {
+    const c = catLabel.toLowerCase()
+    parts.push(`${article(c)} ${c}`)
+  }
 
-  if (ctrl) parts.push(`with ${ctrl.toLowerCase()} controls`)
+  if (ctrl) {
+    const ctrlDisplay = ctrl.replace(/\s*controls?\s*$/i, '').trim()
+    if (ctrlDisplay) parts.push(`with ${ctrlDisplay.toLowerCase()} controls`)
+  }
   if (minT && maxT) parts.push(`operating between ${minT.replace(' Degrees Celsius','°C')} and ${maxT.replace(' Degrees Celsius','°C')}`)
 
   const familySize = capacity ? familySizeFromCapacity(capacity) : null
@@ -226,7 +236,7 @@ ${faqs.map(([q, a]) => `<details style="border:1px solid #e0e0e0;border-radius:4
 </p>
 
 <script type="application/ld+json">
-${JSON.stringify(schema, null, 2)}
+${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
 </script>`
 }
 
