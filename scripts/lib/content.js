@@ -75,6 +75,31 @@ function loadProducts(categories, prodsDir) {
   return index
 }
 
+function sparklineSVG(productId, priceSeriesDir) {
+  const fp = path.join(priceSeriesDir, `${productId}.json`)
+  if (!fs.existsSync(fp)) return ''
+  let entries
+  try { entries = JSON.parse(fs.readFileSync(fp, 'utf8')) } catch { return '' }
+  // format: { points: [{date, price, merchant}] }
+  const points = Array.isArray(entries.points) ? entries.points.map(e => e.price) : []
+  if (!Array.isArray(points) || points.length < 3) return ''
+  const prices = points.filter(p => typeof p === 'number' && p > 0)
+  if (prices.length < 3) return ''
+
+  const W = 80, H = 24
+  const min = Math.min(...prices)
+  const max = Math.max(...prices)
+  const range = max - min || 1
+  const coords = prices.map((p, i) => {
+    const x = Math.round((i / (prices.length - 1)) * W)
+    const y = Math.round(H - ((p - min) / range) * (H - 2) - 1)
+    return `${x},${y}`
+  }).join(' ')
+
+  const trend = prices[prices.length - 1] >= prices[0] ? '#4caf50' : '#f44336'
+  return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:inline-block;vertical-align:middle;" aria-hidden="true"><polyline points="${coords}" fill="none" stroke="${trend}" stroke-width="1.5" stroke-linejoin="round"/></svg>`
+}
+
 module.exports = {
   resolveOffer,
   specTable,
@@ -84,4 +109,5 @@ module.exports = {
   asciDisclosure,
   methodologyBlock,
   loadProducts,
+  sparklineSVG,
 }

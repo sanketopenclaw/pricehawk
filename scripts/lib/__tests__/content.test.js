@@ -1,9 +1,12 @@
 // scripts/lib/__tests__/content.test.js
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
+const os = require('os')
+const path = require('path')
+const fs = require('fs')
 const {
   resolveOffer, specTable, featureHighlights,
-  familySizeFromCapacity, getSpecVal,
+  familySizeFromCapacity, getSpecVal, sparklineSVG,
 } = require('../content')
 
 test('specTable renders rows from specifications', () => {
@@ -70,4 +73,41 @@ test('getSpecVal returns first matching key', () => {
 
 test('getSpecVal returns null when no key matches', () => {
   assert.strictEqual(getSpecVal({ 'Capacity': '4L' }, 'Wattage', 'Output Wattage'), null)
+})
+
+test('sparklineSVG returns empty string for missing product', () => {
+  assert.strictEqual(sparklineSVG('nonexistent-product-id', os.tmpdir()), '')
+})
+
+test('sparklineSVG returns empty string for fewer than 3 data points', () => {
+  const tmpDir = os.tmpdir()
+  const tmpFile = path.join(tmpDir, 'test-product.json')
+  fs.writeFileSync(tmpFile, JSON.stringify({
+    product_id: 'test-product',
+    points: [
+      { date: '2026-06-07', price: 10000, merchant: 'amazon_in' },
+      { date: '2026-06-08', price: 9999, merchant: 'amazon_in' },
+    ],
+  }))
+  assert.strictEqual(sparklineSVG('test-product', tmpDir), '')
+  fs.unlinkSync(tmpFile)
+})
+
+test('sparklineSVG returns SVG for valid price series', () => {
+  const tmpDir = os.tmpdir()
+  const tmpFile = path.join(tmpDir, 'test-product.json')
+  fs.writeFileSync(tmpFile, JSON.stringify({
+    product_id: 'test-product',
+    points: [
+      { date: '2026-06-04', price: 10000, merchant: 'amazon_in' },
+      { date: '2026-06-05', price: 9500, merchant: 'amazon_in' },
+      { date: '2026-06-06', price: 9800, merchant: 'amazon_in' },
+      { date: '2026-06-07', price: 9200, merchant: 'amazon_in' },
+      { date: '2026-06-08', price: 9100, merchant: 'amazon_in' },
+    ],
+  }))
+  const svg = sparklineSVG('test-product', tmpDir)
+  assert.ok(svg.includes('<svg'))
+  assert.ok(svg.includes('<polyline'))
+  fs.unlinkSync(tmpFile)
 })
