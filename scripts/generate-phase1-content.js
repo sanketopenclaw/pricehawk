@@ -18,14 +18,13 @@ require('dotenv').config()
 const fs   = require('fs')
 const path = require('path')
 const axios = require('axios')
+const { makeAuth, wpUpsertPage } = require('./lib/wp')
+const { asciDisclosure, methodologyBlock } = require('./lib/content')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
 const PASS = process.env.WORDPRESS_APP_PASSWORD
-const AUTH = {
-  Authorization: `Basic ${Buffer.from(`${USER}:${PASS}`).toString('base64')}`,
-  'Content-Type': 'application/json',
-}
+const AUTH = makeAuth(USER, PASS)
 
 const PRODS_DIR = path.join(__dirname, '../data/products')
 const YEAR = new Date().getFullYear()
@@ -84,16 +83,6 @@ const CAT_BUYING_FACTORS = {
   'hand-blenders':      ['Motor power (250–800W)', 'Variable speed settings', 'Attachments (chopper bowl, whisk, beaker)', 'Shaft material (stainless steel preferred)', 'Detachable shaft for cleaning', 'Splatter guard', 'Ergonomic grip and button layout'],
   'sandwich-makers':    ['Plate type (flat grill, triangular toast, waffle, multi-use)', 'Non-stick coating quality', 'Power (750–1500W)', 'Floating hinge for thick bread', 'Ready indicator lights', 'Cool-touch exterior', 'Easy wipe-down or removable plates'],
   'rice-cookers':       ['Capacity — 1L for 2 people, 1.8L for 4, 2.8L+ for large households', 'Keep-warm function duration', 'Non-stick inner pot quality', 'Steam tray included', 'Auto shut-off and thermal cut-off', 'Multi-cook functions (steam, slow cook)', 'Ease of cleaning'],
-}
-
-const ASCI_DISCLOSURE = `<div style="background:#fff8e1;border-left:4px solid #f9a825;padding:10px 16px;font-size:13px;line-height:1.5;margin-bottom:20px;">
-<strong>Affiliate Disclosure:</strong> PriceHawk earns a commission on qualifying purchases made through links on this page. This never influences our editorial recommendations. As an Amazon Associate I earn from qualifying purchases.
-</div>`
-
-function methodologyBlock(catLabel, productCount) {
-  return `<div style="background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:14px 18px;margin:24px 0;font-size:13px;line-height:1.6;">
-<strong>Our approach:</strong> This page covers ${productCount} ${catLabel} models available on Amazon India. Selections are based on published specifications, analysis of user review patterns, price-to-feature value across price segments, and competitive positioning. PriceHawk has not independently lab-tested all units listed. Where hands-on experience exists, it is noted.
-</div>`
 }
 
 function titleCase(slug) {
@@ -171,11 +160,11 @@ function buildCategoryHubHTML(catSlug, products) {
     ]
   }
 
-  return `${ASCI_DISCLOSURE}
+  return `${asciDisclosure()}
 
 <p style="font-size:16px;line-height:1.7;color:#333;">${intro}</p>
 
-${methodologyBlock(catLabel, products.length)}
+${methodologyBlock(`This page covers ${products.length} ${catLabel} models available on Amazon India.`)}
 
 <nav style="background:#f9f9f9;border:1px solid #e0e0e0;padding:10px 16px;border-radius:4px;margin-bottom:24px;font-size:13px;">
 <strong>Browse by brand:</strong> ${brands.slice(0, 10).map(b => `<span style="margin:0 6px;">${b}</span>`).join('·')}
@@ -231,11 +220,11 @@ function buildBrandPageHTML(brand, catSlug, brandProducts) {
     }
   }
 
-  return `${ASCI_DISCLOSURE}
+  return `${asciDisclosure()}
 
 <p style="font-size:16px;line-height:1.7;color:#333;">${brand} is one of the most widely reviewed ${catLabel} brands on Amazon India. Below is the complete ${brand} ${catLabel} range — updated regularly by PriceHawk.</p>
 
-${methodologyBlock(`${brand} ${catLabel}`, sorted.length)}
+${methodologyBlock(`This page covers ${sorted.length} ${brand} ${catLabel} models available on Amazon India.`)}
 
 <h2 style="font-size:22px;font-weight:700;margin:24px 0 12px;">${brand} ${catLabel} — All Models</h2>
 
@@ -247,36 +236,6 @@ ${productRows}
 <script type="application/ld+json">
 ${JSON.stringify(schema, null, 2)}
 </script>`
-}
-
-// ── WP REST helpers ───────────────────────────────────────────────────────────
-
-async function wpFindPage(slug) {
-  try {
-    // Must include draft status — default query only returns published pages
-    const r = await axios.get(`${WP}/wp-json/wp/v2/pages?slug=${slug}&per_page=1&status=draft,publish,private`, { headers: AUTH })
-    return r.data?.[0] || null
-  } catch { return null }
-}
-
-async function wpUpsertPage({ title, slug, content }, dryRun) {
-  if (dryRun) {
-    console.log(`    [dry] ${slug}`)
-    return null
-  }
-  const existing = await wpFindPage(slug)
-  const payload = { title, content, slug, status: 'draft', comment_status: 'closed' }
-  try {
-    if (existing) {
-      const r = await axios.post(`${WP}/wp-json/wp/v2/pages/${existing.id}`, payload, { headers: AUTH })
-      return { action: 'updated', id: r.data.id, link: r.data.link }
-    } else {
-      const r = await axios.post(`${WP}/wp-json/wp/v2/pages`, payload, { headers: AUTH })
-      return { action: 'created', id: r.data.id, link: r.data.link }
-    }
-  } catch (e) {
-    throw new Error(e.response?.data?.message || e.message)
-  }
 }
 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
@@ -311,7 +270,7 @@ async function main() {
           title:   `Best ${catLabel} in India ${YEAR} — Prices, Reviews & Deals`,
           slug:    `best-${catSlug}`,
           content: buildCategoryHubHTML(catSlug, products),
-        }, dryRun)
+        }, { wp: WP, auth: AUTH, dryRun })
         if (result) console.log(`  ✓ category hub [${result.action}]: ${result.link}`)
         stats.category_page++
       } catch (e) {
@@ -340,7 +299,7 @@ async function main() {
             title:   `${brand} ${catLabel} India — Best Prices & Reviews`,
             slug:    `${catSlug}-${brandSlug}`,
             content: buildBrandPageHTML(brand, catSlug, brandProducts),
-          }, dryRun)
+          }, { wp: WP, auth: AUTH, dryRun })
           if (result) console.log(`  ✓ brand [${brand}] [${result.action}]: ${result.link}`)
           stats.brand_page++
         } catch (e) {
