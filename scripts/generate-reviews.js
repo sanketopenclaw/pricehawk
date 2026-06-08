@@ -7,7 +7,7 @@ const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
   resolveOffer, specTable, featureHighlights,
   familySizeFromCapacity, getSpecVal, asciDisclosure,
-  methodologyBlock, loadProducts,
+  methodologyBlock, loadProducts, sparklineSVG,
 } = require('./lib/content')
 const { reviewSchema, slugify } = require('./lib/schema')
 
@@ -17,8 +17,9 @@ const PASS = process.env.WORDPRESS_APP_PASSWORD
 const TAG  = process.env.AMAZON_AFFILIATE_TAG || 'pricehawkin-21'
 const AUTH = makeAuth(USER, PASS)
 
-const PRODS_DIR  = path.join(__dirname, '../data/products')
-const QUEUE_FILE = path.join(__dirname, '../data/content/phase1_queue.json')
+const PRODS_DIR       = path.join(__dirname, '../data/products')
+const QUEUE_FILE      = path.join(__dirname, '../data/content/phase1_queue.json')
+const PRICE_SERIES_DIR = path.join(__dirname, '../data/price_series')
 const YEAR = new Date().getFullYear()
 
 const KITCHEN = ['air-fryers','mixer-grinders','coffee-machines','induction-cooktops',
@@ -183,6 +184,8 @@ function buildReviewHTML(product, catSlug) {
   const featuresHTML  = featureHighlights(features)
   const whoHTML       = buildWhoShouldBuy(specs, catLabel, features)
   const asinSlug      = `review-${slugify(brand)}-${asin.toLowerCase()}`
+  const productId     = product.product_id || null
+  const sparkline     = productId ? sparklineSVG(productId, PRICE_SERIES_DIR) : ''
 
   const schema = reviewSchema({ name, brand, catLabel, catSlug, link, faqs, asinSlug })
 
@@ -199,6 +202,7 @@ function buildReviewHTML(product, catSlug) {
 <div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;margin:20px 0;">
   <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">${brand}</p>
   <h2 style="font-size:17px;font-weight:700;margin:0 0 12px;line-height:1.4;">${name}</h2>
+  ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 10px;">Price trend (${YEAR}) ${sparkline}</p>` : ''}
   <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
      style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:14px;font-weight:700;padding:9px 20px;border-radius:4px;">
     Check price on Amazon →

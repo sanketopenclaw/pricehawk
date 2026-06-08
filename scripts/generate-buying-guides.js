@@ -6,7 +6,7 @@ const path = require('path')
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
   resolveOffer, featureHighlights,
-  asciDisclosure, methodologyBlock, loadProducts, getSpecVal,
+  asciDisclosure, methodologyBlock, loadProducts, getSpecVal, sparklineSVG,
 } = require('./lib/content')
 const { guideSchema, slugify } = require('./lib/schema')
 
@@ -16,8 +16,9 @@ const PASS = process.env.WORDPRESS_APP_PASSWORD
 const TAG  = process.env.AMAZON_AFFILIATE_TAG || 'pricehawkin-21'
 const AUTH = makeAuth(USER, PASS)
 
-const PRODS_DIR  = path.join(__dirname, '../data/products')
-const QUEUE_FILE = path.join(__dirname, '../data/content/phase1_queue.json')
+const PRODS_DIR        = path.join(__dirname, '../data/products')
+const QUEUE_FILE       = path.join(__dirname, '../data/content/phase1_queue.json')
+const PRICE_SERIES_DIR = path.join(__dirname, '../data/price_series')
 const YEAR = new Date().getFullYear()
 
 const KITCHEN = ['air-fryers','mixer-grinders','coffee-machines','induction-cooktops',
@@ -140,11 +141,14 @@ function buildProductCard(product, catSlug, position) {
 
   const seg = product.price_segment || product._legacy?.price_segment || null
   const segLabel = seg ? seg.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : null
+  const productId = product.product_id || null
+  const sparkline = productId ? sparklineSVG(productId, PRICE_SERIES_DIR) : ''
 
   return `<div style="border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;margin-bottom:16px;">
   <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">#${position} · ${brand}${segLabel ? ` · ${segLabel}` : ''}</p>
   <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;line-height:1.4;">${shortName(name, 70)}</h3>
   ${specBits.length ? `<p style="font-size:13px;color:#555;margin:0 0 8px;">${specBits.join(' · ')}</p>` : ''}
+  ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 6px;">Price trend ${sparkline}</p>` : ''}
   ${topFeature ? `<p style="font-size:13px;color:#333;margin:0 0 12px;font-style:italic;">"${topFeature}"</p>` : ''}
   <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
      style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
