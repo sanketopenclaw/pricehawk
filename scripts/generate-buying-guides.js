@@ -5,11 +5,24 @@ const path = require('path')
 
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
-  resolveOffer, featureHighlights,
-  asciDisclosure, methodologyBlock, loadProducts, getSpecVal, sparklineSVG,
-  bestValueScore, topValueProduct, metaDescription,
+  resolveOffer, asciDisclosure, loadProducts, getSpecVal, sparklineSVG,
+  topValueProduct, metaDescription,
 } = require('./lib/content')
 const { guideSchema, slugify } = require('./lib/schema')
+const {
+  classifyPicks,
+  buildPageStyles,
+  buildQuickPicksTable,
+  buildTrustSection,
+  buildComparisonTable,
+  buildProductRecommendation,
+  buildLabsSection,
+  buildBuyingGuideSection,
+  buildAlternativesSection,
+  buildFAQSection,
+  buildFinalRecsSection,
+  buildInternalLinksSection,
+} = require('./lib/guide-content')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -39,7 +52,7 @@ const CAT_LABEL_SINGULAR = {
 }
 
 const CAT_INTROS = {
-  'air-fryers': 'Air fryers are now India\'s fastest-growing kitchen appliance — delivering crispy results with significantly less oil than traditional frying. Whether you\'re making samosas, pakoras, or grilled chicken, the right air fryer transforms everyday cooking.',
+  'air-fryers': 'Air fryers are India\'s fastest-growing kitchen appliance — delivering crispy results with significantly less oil than traditional frying. Whether you\'re making samosas, pakoras, or grilled chicken, the right air fryer transforms everyday cooking.',
   'mixer-grinders': 'A good mixer grinder is the backbone of an Indian kitchen. From idli batter to evening chutneys, the right one saves time and lasts years.',
   'coffee-machines': 'India\'s coffee culture has outgrown instant powder. A coffee machine delivers café-quality results at home and pays for itself within months compared to daily coffee shop visits.',
   'induction-cooktops': 'Induction cooktops offer precise temperature control, energy efficiency, and safety — no open flame, no gas leak risk. Ideal for Indian cooking styles.',
@@ -52,163 +65,170 @@ const CAT_INTROS = {
 
 const CAT_BUYING_FACTORS = {
   'air-fryers': [
-    { factor: 'Capacity', tip: 'A 2–3L basket suits 1–2 people. For a family of 4, choose 4–6L. Larger baskets take longer to heat.' },
-    { factor: 'Wattage', tip: 'Higher wattage (1500W+) preheats faster and maintains temperature better during use.' },
-    { factor: 'Preset Programs', tip: 'Presets are convenient for beginners. Experienced cooks often prefer manual control.' },
-    { factor: 'Controls', tip: 'Digital touchscreen offers precision. Analog dials are simpler and often more durable.' },
+    { factor: 'Capacity', tip: 'A 2–3L basket suits 1–2 people. For a family of 4, choose 4–6L. Larger baskets take longer to heat up uniformly.' },
+    { factor: 'Wattage', tip: 'Higher wattage (1500W+) preheats faster and maintains temperature better during use. Do not go below 1000W.' },
+    { factor: 'Preset Programs', tip: 'Presets are convenient for beginners. Experienced cooks often prefer full manual control over temperature and time.' },
+    { factor: 'Controls', tip: 'Digital touchscreen offers precision. Analog dials are simpler and often more durable over time.' },
   ],
   'mixer-grinders': [
-    { factor: 'Wattage', tip: '500W handles light daily use. 750W suits families grinding idli/dosa batter regularly.' },
-    { factor: 'Number of Jars', tip: '3 jars (dry, wet, chutney) covers most Indian cooking needs.' },
-    { factor: 'Motor Warranty', tip: 'Look for minimum 2-year motor warranty. Indian brands often offer 5-year warranties.' },
-    { factor: 'Jar Material', tip: 'Stainless steel jars are more durable and do not stain.' },
+    { factor: 'Wattage', tip: '500W handles light daily use. 750W suits families grinding idli/dosa batter regularly. Below 500W is insufficient for most Indian kitchens.' },
+    { factor: 'Number of Jars', tip: '3 jars (dry, wet, chutney) covers most Indian cooking needs. A liquidising jar is useful for large families.' },
+    { factor: 'Motor Warranty', tip: 'Look for a minimum 2-year motor warranty. Indian brands often offer 5-year motor warranties — a strong quality signal.' },
+    { factor: 'Jar Material', tip: 'Stainless steel jars are more durable and do not stain. Polycarbonate jars are lighter but prone to cracking over time.' },
   ],
   'coffee-machines': [
-    { factor: 'Coffee Type', tip: 'Drip: bulk coffee. Espresso: café-style shots. Capsule: convenience at higher per-cup cost.' },
-    { factor: 'Bar Pressure', tip: 'True espresso requires 9 bar minimum.' },
-    { factor: 'Milk Frother', tip: 'Required for cappuccinos and lattes. Budget machines typically omit this.' },
-    { factor: 'Descaling', tip: 'In hard-water cities, descale monthly. Choose models with descaling indicators.' },
+    { factor: 'Coffee Type', tip: 'Drip: bulk coffee for multiple cups. Espresso: café-style shots. Capsule: convenience at a higher per-cup cost.' },
+    { factor: 'Bar Pressure', tip: 'True espresso requires a minimum of 9 bar pump pressure. Lower pressure produces a weaker, less crema-rich shot.' },
+    { factor: 'Milk Frother', tip: 'Required for cappuccinos and lattes. Budget machines typically omit this — factor in the cost if it matters to you.' },
+    { factor: 'Descaling', tip: 'In hard-water cities, descale monthly. Choose models with a descaling indicator to avoid guesswork.' },
   ],
   'induction-cooktops': [
-    { factor: 'Wattage', tip: '1200W handles everyday cooking. 1800–2000W boils water faster.' },
-    { factor: 'Cookware', tip: 'Only ferromagnetic cookware works — cast iron and most stainless steel.' },
-    { factor: 'Presets', tip: 'Temperature presets for dal, milk, chai save effort for daily use.' },
-    { factor: 'Safety', tip: 'Look for auto-shutoff, child lock, and overheating protection.' },
+    { factor: 'Wattage', tip: '1200W handles everyday cooking. 1800–2000W boils water faster and handles deep frying better.' },
+    { factor: 'Cookware Compatibility', tip: 'Only ferromagnetic cookware works — cast iron and magnetic stainless steel. Test with a magnet before purchasing.' },
+    { factor: 'Presets', tip: 'Temperature presets for dal, milk, and chai save effort for repetitive daily cooking tasks.' },
+    { factor: 'Safety Features', tip: 'Look for auto-shutoff, child lock, and overheating protection — essential for households with children.' },
   ],
   'electric-kettles': [
-    { factor: 'Capacity', tip: '1L for 2–3 cups. 1.5–1.7L suits most households. 2L+ for larger families.' },
-    { factor: 'Material', tip: 'Stainless steel interior is essential — no plastic taste, more hygienic.' },
-    { factor: 'Wattage', tip: '1500W boils 1 litre in ~3.5 minutes. 2200W cuts this to ~2 minutes.' },
-    { factor: 'Temperature Control', tip: 'Variable temperature needed for green tea or specialty coffee only.' },
+    { factor: 'Capacity', tip: '1L for 2–3 cups. 1.5–1.7L suits most households. 2L+ for larger families or offices.' },
+    { factor: 'Interior Material', tip: 'Stainless steel interior is essential — no plastic taste, more hygienic, and easier to descale.' },
+    { factor: 'Wattage', tip: '1500W boils 1 litre in ~3.5 minutes. 2200W cuts this to ~2 minutes. For most uses, the difference is negligible.' },
+    { factor: 'Temperature Control', tip: 'Variable temperature matters only for green tea (75°C), white tea (70°C), or specialty pour-over coffee (93°C).' },
   ],
   'food-processors': [
-    { factor: 'Wattage', tip: '600W handles most household tasks. 800–1000W for heavy continuous use.' },
-    { factor: 'Bowl Capacity', tip: '1.5–2L suits 2–4 people. 3L+ for large families.' },
-    { factor: 'Attachments', tip: 'Slicing disc, shredding disc, and chopping blade cover 90% of use cases.' },
-    { factor: 'Cleaning', tip: 'Wide-mouth bowls with dishwasher-safe parts save significant time.' },
+    { factor: 'Wattage', tip: '600W handles most household tasks. 800–1000W for heavy continuous use like kneading dough or shredding hard vegetables.' },
+    { factor: 'Bowl Capacity', tip: '1.5–2L suits 2–4 people. 3L+ for large families or batch cooking.' },
+    { factor: 'Attachments', tip: 'Slicing disc, shredding disc, chopping blade, and dough blade cover 90% of use cases. Evaluate the included set carefully.' },
+    { factor: 'Cleaning', tip: 'Wide-mouth bowls with dishwasher-safe parts save significant time. Narrow openings trap food residue.' },
   ],
   'hand-blenders': [
-    { factor: 'Wattage', tip: '250–400W handles smoothies, soups, and baby food. 600W+ for tough ingredients.' },
-    { factor: 'Speed Settings', tip: 'Variable speed gives better control for different textures.' },
-    { factor: 'Shaft Material', tip: 'Stainless steel shafts last significantly longer than plastic.' },
-    { factor: 'Attachments', tip: 'Chopper bowl and whisk attachments expand functionality significantly.' },
+    { factor: 'Wattage', tip: '250–400W handles smoothies, soups, and baby food. 600W+ for tough ingredients like fibrous vegetables or frozen fruit.' },
+    { factor: 'Speed Settings', tip: 'Variable speed gives better control across different textures. At minimum, ensure high and low speeds are available.' },
+    { factor: 'Shaft Material', tip: 'Stainless steel shafts last significantly longer than plastic and are safe for hot liquids.' },
+    { factor: 'Attachments', tip: 'A chopper bowl and whisk attachment expand functionality significantly for daily kitchen tasks.' },
   ],
   'sandwich-makers': [
-    { factor: 'Plate Type', tip: 'Fixed triangular: basic sandwich only. Flat grill: paninis. Removable: swap between modes.' },
-    { factor: 'Wattage', tip: '750–900W standard. Higher wattage preheats faster for multiple sandwiches.' },
-    { factor: 'Non-Stick', tip: 'Quality coating reduces need for butter and makes cleaning easier.' },
-    { factor: 'Indicator', tip: 'Ready indicator shows when maker has reached cooking temperature.' },
+    { factor: 'Plate Type', tip: 'Fixed triangular: basic sandwich only. Flat grill: paninis and vegetables. Removable plates: swap between modes — most versatile.' },
+    { factor: 'Wattage', tip: '750–900W is standard. Higher wattage preheats faster, which matters when making multiple sandwiches consecutively.' },
+    { factor: 'Non-Stick Coating', tip: 'Quality non-stick coating reduces need for butter, prevents sticking, and makes cleaning easier.' },
+    { factor: 'Ready Indicator', tip: 'A ready indicator light signals when the maker has reached cooking temperature — avoids undercooked sandwiches.' },
   ],
   'rice-cookers': [
     { factor: 'Capacity', tip: '1L for 1–2 people. 1.8L is the standard Indian household size. 2.8L+ for larger families.' },
-    { factor: 'Inner Pot', tip: 'Non-stick coating prevents sticking. Thicker pots provide even heat distribution.' },
-    { factor: 'Keep-Warm', tip: 'Auto keep-warm function essential for Indian households with staggered mealtimes.' },
-    { factor: 'Multi-Cook', tip: 'Multi-cook handles rice, dal, khichdi, and steam — worth it for daily use.' },
+    { factor: 'Inner Pot Quality', tip: 'Non-stick coating prevents sticking. Thicker pots provide more even heat distribution across the base.' },
+    { factor: 'Keep-Warm Function', tip: 'Auto keep-warm is essential for Indian households with staggered meal times — keeps rice fresh for 2–3 hours.' },
+    { factor: 'Multi-Cook', tip: 'Multi-cook handles rice, dal, khichdi, and steam — worth it for daily use. Single-function models are limiting.' },
   ],
 }
 
-function titleCase(s) { return (s||'').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) }
-function shortName(name, max=50) {
-  const c=(name||'').replace(/\s*[\\|,].*$/,'').trim()
-  return c.length>max ? c.substring(0,max-1)+'…' : c
+function titleCase(s) { return (s || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) }
+function shortName(name, max = 50) {
+  const c = (name || '').replace(/\s*[|,].*$/, '').trim()
+  return c.length > max ? c.substring(0, max - 1) + '…' : c
 }
 
-function getProductsForCat(catSlug, productIndex, n=5) {
+function getProductsForCat(catSlug, productIndex, n = 6) {
   return Object.values(productIndex)
     .filter(p => p._catSlug === catSlug)
     .map(p => {
       const offer = resolveOffer(p)
       return { ...p, _price: offer.last_price || p._legacy?.current_price || 0 }
     })
-    .sort((a, b) => a._price - b._price)
+    .sort((a, b) => {
+      // Sort by popularity score for best display order
+      const scoreA = parseFloat(a._legacy?.rating || '4') * Math.log1p(parseInt((String(a._legacy?.review_count || '0')).replace(/[^0-9]/g, '') || '0'))
+      const scoreB = parseFloat(b._legacy?.rating || '4') * Math.log1p(parseInt((String(b._legacy?.review_count || '0')).replace(/[^0-9]/g, '') || '0'))
+      return scoreB - scoreA
+    })
     .slice(0, n)
-}
-
-function buildProductCard(product, catSlug, position, topValueId = null) {
-  const name    = product.product_name || product._legacy?.name || 'Product'
-  const brand   = titleCase(product.brand_id || '')
-  const offer   = resolveOffer(product)
-  const asin    = offer.external_id || product._legacy?.asin || ''
-  const link    = offer.affiliate_url || `https://www.amazon.in/dp/${asin}?tag=${TAG}`
-  const specs   = product.specifications || {}
-  const features = specs._features || []
-
-  const wattage  = getSpecVal(specs, 'Output Wattage', 'Wattage')
-  const capacity = getSpecVal(specs, 'Capacity', 'Volume', 'Bowl Capacity')
-  const ctrl     = getSpecVal(specs, 'Controller Type', 'Control Method')
-  const specBits = [wattage, capacity, ctrl].filter(Boolean)
-
-  const topFeature = features[0] || null
-
-  const seg = product.price_segment || product._legacy?.price_segment || null
-  const segLabel = seg ? seg.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : null
-  const productId = product.product_id || null
-  const sparkline = productId ? sparklineSVG(productId, PRICE_SERIES_DIR) : ''
-  const isBestValue = topValueId && product.product_id && product.product_id === topValueId
-
-  return `<div style="border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;margin-bottom:16px;">
-  <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">#${position} · ${brand}${segLabel ? ` · ${segLabel}` : ''}${isBestValue ? ' <span style="background:#4caf50;color:#fff;font-size:10px;padding:2px 6px;border-radius:3px;margin-left:4px;vertical-align:middle;">BEST VALUE</span>' : ''}</p>
-  <h3 style="font-size:16px;font-weight:700;margin:0 0 8px;line-height:1.4;">${shortName(name, 70)}</h3>
-  ${specBits.length ? `<p style="font-size:13px;color:#555;margin:0 0 8px;">${specBits.join(' · ')}</p>` : ''}
-  ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 6px;">Price trend ${sparkline}</p>` : ''}
-  ${topFeature ? `<p style="font-size:13px;color:#333;margin:0 0 12px;font-style:italic;">"${topFeature}"</p>` : ''}
-  <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
-     style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
-    Check price on Amazon →
-  </a>
-</div>`
 }
 
 function buildGuideHTML(products, catSlug, subtype, useCase) {
   const catLabel    = CAT_LABELS[catSlug] || titleCase(catSlug)
   const catSingular = CAT_LABEL_SINGULAR[catSlug] || catLabel.toLowerCase()
   const intro       = CAT_INTROS[catSlug] || `Find the best ${catSingular} for Indian homes.`
-  const factors     = CAT_BUYING_FACTORS[catSlug] || []
   const guideSlug   = `best-${catSlug}${useCase ? '-' + slugify(useCase) : ''}${subtype === 'budget' ? '-budget' : ''}`
 
-  const topValue = topValueProduct(products)
+  const topValue   = topValueProduct(products)
   const topValueId = topValue ? (topValue.product_id || null) : null
+  const picks      = classifyPicks(products)
 
-  const productList = products.map((p) => ({
+  // Section 1 – Quick Picks
+  const s1 = buildQuickPicksTable(picks, catLabel, catSingular, TAG)
+
+  // Intro paragraph
+  const introHTML = `<p style="font-size:16px;line-height:1.8;color:#333;margin:24px 0;">${intro}</p>`
+
+  // Section 2 – Trust / Methodology
+  const s2 = buildTrustSection(catLabel)
+
+  // Section 3 – Comparison Table
+  const s3 = buildComparisonTable(products, products)
+
+  // Section 4 – Top Recommendations (individual deep-dives)
+  const s4Header = `<h2 style="font-size:20px;font-weight:700;margin:36px 0 16px;">Top ${catLabel} Recommendations — Detailed Analysis</h2>`
+  const s4Cards  = products.map((p, i) => buildProductRecommendation(p, catSlug, catSingular, i + 1, topValueId, products, TAG)).join('\n')
+
+  // Section 5 – PriceHawk Labs
+  const s5 = buildLabsSection(products, catSlug, catLabel)
+
+  // Section 6 – Buying Guide
+  const s6 = buildBuyingGuideSection(catSlug, catLabel, CAT_BUYING_FACTORS)
+
+  // Section 7 – Alternatives
+  const s7 = buildAlternativesSection(products, catSlug, catLabel, catSingular, TAG)
+
+  // Section 8 – FAQ
+  const s8 = buildFAQSection(catSlug, catLabel, catSingular, YEAR)
+
+  // Section 9 – Final Recommendations
+  const s9 = buildFinalRecsSection(picks, catLabel, catSingular)
+
+  // Section 10 – Internal Links
+  const s10 = buildInternalLinksSection(catSlug, catLabel, products)
+
+  // Schema.org
+  const productList = products.map(p => ({
     name: shortName(p.product_name || p._legacy?.name || '', 60),
     link: (() => { const o = resolveOffer(p); return o.affiliate_url || `https://www.amazon.in/dp/${o.external_id || p._legacy?.asin}?tag=${TAG}` })()
   }))
-
   const schema = guideSchema({ catLabel, catSlug, slug: guideSlug, products: productList })
+  const schemaJSON = JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
 
-  const cardsHTML = products.map((p, i) => buildProductCard(p, catSlug, i + 1, topValueId)).join('\n')
+  return `${buildPageStyles()}
 
-  const factorsHTML = factors.length ? `
-<h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;">What to Look For</h2>
-${factors.map(({ factor, tip }) => `<div style="margin-bottom:12px;">
-  <p style="font-size:15px;font-weight:700;margin:0 0 4px;">${factor}</p>
-  <p style="font-size:14px;color:#444;margin:0;line-height:1.6;">${tip}</p>
-</div>`).join('\n')}` : ''
-
-  const methodCtx = `This guide covers ${catLabel} available on Amazon India. Selections are based on published specifications, price-to-feature value across segments, and analysis of user review patterns.`
-
-  return `${asciDisclosure()}
+${asciDisclosure()}
 
 <nav style="font-size:13px;color:#888;margin-bottom:20px;">
-<a href="/" style="color:#666;">Home</a> › ${catLabel} Buying Guide
+  <a href="/" style="color:#666;">Home</a> ›
+  <a href="/best-${catSlug}/" style="color:#666;">${catLabel}</a> ›
+  Buying Guide
 </nav>
 
-<p style="font-size:16px;line-height:1.7;color:#333;">${intro}</p>
+${introHTML}
 
-<h2 style="font-size:20px;font-weight:700;margin:28px 0 16px;">Top Picks</h2>
-${cardsHTML}
+${s1}
 
-${factorsHTML}
+${s2}
 
-${methodologyBlock(methodCtx)}
+${s3}
 
-<hr style="margin:32px 0;border:none;border-top:1px solid #e0e0e0;">
-<p style="font-size:13px;color:#888;">
-  <a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← See all ${catLabel} options in India ${YEAR}</a>
-</p>
+${s4Header}
+${s4Cards}
+
+${s5}
+
+${s6}
+
+${s7}
+
+${s8}
+
+${s9}
+
+${s10}
 
 <script type="application/ld+json">
-${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
+${schemaJSON}
 </script>`
 }
 
@@ -250,10 +270,17 @@ async function main() {
         : `Best ${catLabel} in India ${YEAR}`
 
     try {
-      const guideMetaDesc = `Best ${catLabel} in India ${YEAR} — top picks ranked by specs and value. ${products.length} options compared.`
+      const guideMetaDesc = `Best ${catLabel} in India ${YEAR} — top picks ranked by specs, ratings, and value. ${products.length} options compared with full buying guide.`
       const md = guideMetaDesc.length > 160 ? guideMetaDesc.substring(0, 157) + '…' : guideMetaDesc
+      const catSingular = CAT_LABEL_SINGULAR[catSlug] || catLabel.toLowerCase()
+      const focusKw = sub === 'budget'
+        ? `best budget ${catSingular} in india`
+        : useCase
+          ? `best ${catSingular} for ${useCase.toLowerCase()}`
+          : `best ${catSingular} in india`
       const html   = buildGuideHTML(products, catSlug, sub, useCase)
-      const result = await wpUpsertPage({ title, slug: guideSlug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc: md })
+      const topImg = products.find(p => p.wp_image_id)?.wp_image_id || null
+      const result = await wpUpsertPage({ title, slug: guideSlug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc: md, focusKw, postType: 'posts', featuredMediaId: topImg })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${sub} | ${useCase || 'general'}`)
         result.action === 'created' ? stats.created++ : stats.updated++
@@ -262,10 +289,10 @@ async function main() {
       console.error(`  ✗ ${catSlug}: ${e.message}`)
       stats.errors++
     }
-    await new Promise(r => setTimeout(r, 300))
+    await new Promise(r => setTimeout(r, 400))
   }
 
-  console.log(`\n── DONE ────────────────────────`)
+  console.log(`\n── DONE ─────────────────────────────`)
   console.log(`Created: ${stats.created} | Updated: ${stats.updated} | Skipped: ${stats.skipped} | Errors: ${stats.errors}`)
   if (dryRun) console.log('(dry run — no WP changes)')
 }

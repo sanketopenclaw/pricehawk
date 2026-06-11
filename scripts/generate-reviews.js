@@ -295,8 +295,10 @@ async function main() {
       const seg      = product.price_segment || product._legacy?.price_segment || 'mid-range'
       const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
       const metaDesc = metaDescription(name, catLabel, specs, seg)
+      const brandName = brand.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      const focusKw  = `${brandName} ${CAT_LABELS[catSlug] || catLabel} review`.toLowerCase()
       const html   = buildReviewHTML(product, catSlug, slugIndex)
-      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc })
+      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc, focusKw, postType: 'posts', featuredMediaId: product.wp_image_id || null })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${short.substring(0, 45)}`)
         result.action === 'created' ? stats.created++ : stats.updated++

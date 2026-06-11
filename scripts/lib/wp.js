@@ -8,30 +8,35 @@ function makeAuth(user, pass) {
   }
 }
 
-async function wpFindPage(slug, { wp, auth }) {
+async function wpFindPage(slug, { wp, auth, postType = 'pages' }) {
   try {
     const r = await axios.get(
-      `${wp}/wp-json/wp/v2/pages?slug=${slug}&per_page=1&status=draft,publish,private`,
+      `${wp}/wp-json/wp/v2/${postType}?slug=${slug}&per_page=1&status=draft,publish,private`,
       { headers: auth }
     )
     return r.data?.[0] || null
   } catch { return null }
 }
 
-async function wpUpsertPage({ title, slug, content }, { wp, auth, dryRun, metaDesc }) {
+async function wpUpsertPage({ title, slug, content }, { wp, auth, dryRun, metaDesc, focusKw, postType = 'pages', categories = [], featuredMediaId = null }) {
   if (dryRun) { console.log(`    [dry] ${slug}`); return null }
-  const existing = await wpFindPage(slug, { wp, auth })
+  const existing = await wpFindPage(slug, { wp, auth, postType })
+  const meta = {}
+  if (metaDesc) meta._yoast_wpseo_metadesc = metaDesc
+  if (focusKw)  meta._yoast_wpseo_focuskw  = focusKw
   const payload = {
     title, content, slug, status: 'draft', comment_status: 'closed',
     excerpt: metaDesc || '',
-    meta: metaDesc ? { _yoast_wpseo_metadesc: metaDesc } : {},
+    meta,
+    ...(featuredMediaId ? { featured_media: featuredMediaId } : {}),
+    ...(postType === 'posts' && categories.length ? { categories } : {}),
   }
   try {
     if (existing) {
-      const r = await axios.post(`${wp}/wp-json/wp/v2/pages/${existing.id}`, payload, { headers: auth })
+      const r = await axios.post(`${wp}/wp-json/wp/v2/${postType}/${existing.id}`, payload, { headers: auth })
       return { action: 'updated', id: r.data.id, link: r.data.link }
     } else {
-      const r = await axios.post(`${wp}/wp-json/wp/v2/pages`, payload, { headers: auth })
+      const r = await axios.post(`${wp}/wp-json/wp/v2/${postType}`, payload, { headers: auth })
       return { action: 'created', id: r.data.id, link: r.data.link }
     }
   } catch (e) {

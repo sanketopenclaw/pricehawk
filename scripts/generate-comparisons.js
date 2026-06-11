@@ -30,6 +30,12 @@ const CAT_LABELS = {
   'food-processors':'Food Processor','hand-blenders':'Hand Blender',
   'sandwich-makers':'Sandwich Maker','rice-cookers':'Rice Cooker',
 }
+const CAT_LABEL_SINGULAR = {
+  'air-fryers':'air fryer','mixer-grinders':'mixer grinder','coffee-machines':'coffee machine',
+  'induction-cooktops':'induction cooktop','electric-kettles':'electric kettle',
+  'food-processors':'food processor','hand-blenders':'hand blender',
+  'sandwich-makers':'sandwich maker','rice-cookers':'rice cooker',
+}
 
 const CAT_FAQS = {
   'air-fryers': [
@@ -298,8 +304,12 @@ async function main() {
         const raw = `${name1} vs ${name2} — spec-by-spec ${catLabel.toLowerCase()} comparison for Indian buyers. Which is better value?`
         return raw.length > 160 ? raw.substring(0, 157) + '…' : raw
       })()
+      const b1Name  = (p1.brand_id || 'product').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      const b2Name  = (p2.brand_id || 'product').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      const catSing = CAT_LABEL_SINGULAR[catSlug] || catLabel.toLowerCase()
+      const focusKw = `${b1Name} vs ${b2Name} ${catSing}`.toLowerCase()
       const html   = buildComparisonHTML(p1, p2, catSlug, slugIndex)
-      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc })
+      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc, focusKw, postType: 'posts', featuredMediaId: p1?.wp_image_id || p2?.wp_image_id || null })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${name1.substring(0,30)} vs ${name2.substring(0,30)}`)
         result.action === 'created' ? stats.created++ : stats.updated++

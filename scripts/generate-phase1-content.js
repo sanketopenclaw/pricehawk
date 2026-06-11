@@ -19,6 +19,7 @@ const fs   = require('fs')
 const path = require('path')
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const { asciDisclosure, methodologyBlock, resolveOffer, metaDescription } = require('./lib/content')
+const { buildPageStyles } = require('./lib/styles')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -123,7 +124,7 @@ function buildCategoryHubHTML(catSlug, products) {
   <div style="flex:1;min-width:0;">
     <p style="font-size:11px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 2px;">${brand}</p>
     <h3 style="font-size:15px;font-weight:600;line-height:1.4;margin:0 0 10px;color:#111;">${i + 1}. ${name}</h3>
-    <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
+    <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#e67e22;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
   </div>
 </div>`
   }).join('\n')
@@ -160,7 +161,9 @@ function buildCategoryHubHTML(catSlug, products) {
     ]
   }
 
-  return `${asciDisclosure()}
+  return `${buildPageStyles()}
+
+${asciDisclosure()}
 
 <p style="font-size:16px;line-height:1.7;color:#333;">${intro}</p>
 
@@ -200,7 +203,7 @@ function buildBrandPageHTML(brand, catSlug, brandProducts) {
 
     return `<div style="border-bottom:1px solid #e8e8e8;padding:14px 0;">
   <h3 style="font-size:15px;font-weight:600;margin:0 0 8px;line-height:1.4;color:#111;">${i + 1}. ${name}</h3>
-  <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
+  <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#e67e22;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
 </div>`
   }).join('\n')
 
@@ -220,7 +223,9 @@ function buildBrandPageHTML(brand, catSlug, brandProducts) {
     }
   }
 
-  return `${asciDisclosure()}
+  return `${buildPageStyles()}
+
+${asciDisclosure()}
 
 <p style="font-size:16px;line-height:1.7;color:#333;">${brand} is one of the most widely reviewed ${catLabel} brands on Amazon India. Below is the complete ${brand} ${catLabel} range — updated regularly by PriceHawk.</p>
 
@@ -269,11 +274,12 @@ async function main() {
         const productCount = products.length
         const hubMeta = `Best ${catLabel} in India ${YEAR} — ${productCount} models compared by specs, brand, and value for Indian buyers.`
         const hubMd = hubMeta.length > 160 ? hubMeta.substring(0, 157) + '…' : hubMeta
+        const hubImg = products.find(p => p.wp_image_id)?.wp_image_id || null
         const result = await wpUpsertPage({
           title:   `Best ${catLabel} in India ${YEAR} — Prices, Reviews & Deals`,
           slug:    `best-${catSlug}`,
           content: buildCategoryHubHTML(catSlug, products),
-        }, { wp: WP, auth: AUTH, dryRun, metaDesc: hubMd })
+        }, { wp: WP, auth: AUTH, dryRun, metaDesc: hubMd, focusKw: `best ${catLabel.toLowerCase()} in india`, postType: 'posts', featuredMediaId: hubImg })
         if (result) console.log(`  ✓ category hub [${result.action}]: ${result.link}`)
         stats.category_page++
       } catch (e) {
@@ -300,11 +306,12 @@ async function main() {
         try {
           const brandMeta = `${brand} ${catLabel} in India — full range with specs and Amazon prices. Find the right model for your needs.`
           const brandMd = brandMeta.length > 160 ? brandMeta.substring(0, 157) + '…' : brandMeta
+          const brandImg = brandProducts.find(p => p.wp_image_id)?.wp_image_id || null
           const result = await wpUpsertPage({
             title:   `${brand} ${catLabel} India — Best Prices & Reviews`,
             slug:    `${catSlug}-${brandSlug}`,
             content: buildBrandPageHTML(brand, catSlug, brandProducts),
-          }, { wp: WP, auth: AUTH, dryRun, metaDesc: brandMd })
+          }, { wp: WP, auth: AUTH, dryRun, metaDesc: brandMd, focusKw: `${brand.toLowerCase()} ${catLabel.toLowerCase()}`, postType: 'posts', featuredMediaId: brandImg })
           if (result) console.log(`  ✓ brand [${brand}] [${result.action}]: ${result.link}`)
           stats.brand_page++
         } catch (e) {
@@ -322,4 +329,6 @@ async function main() {
   if (dryRun) console.log('(dry run — no WP changes made)')
 }
 
-main().catch(e => { console.error(e.message); process.exit(1) })
+if (require.main === module) {
+  main().catch(e => { console.error(e.message); process.exit(1) })
+}
