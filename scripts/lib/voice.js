@@ -97,8 +97,8 @@ function tradeoffVerdict({ short1, short2, reasons1 = [], reasons2 = [], seed = 
   const r1 = reasonNoun(reasons1[0], 'its overall spec balance')
   const r2 = reasonNoun(reasons2[0], 'its overall spec balance')
   const closer = seededPick(VERDICT_CLOSERS, seed + '-c')
-  return `<p style="font-size:15px;line-height:1.7;color:#333;margin:0 0 16px;">
-${opener} On paper, the <strong>${short1}</strong> brings ${r1}, while the <strong>${short2}</strong> offers ${r2}.
+  return `<p style="font-size:15px;line-height:1.7;color:#c8c8c8;margin:0 0 16px;">
+${opener} On paper, the <strong style="color:#f0f0f0;">${short1}</strong> brings ${r1}, while the <strong style="color:#f0f0f0;">${short2}</strong> offers ${r2}.
 ${closer}
 </p>`
 }
@@ -106,8 +106,8 @@ ${closer}
 // Honesty block (DNA: comfortable with uncertainty; trust through admitted gaps)
 function cantTellYouBlock(catLabel) {
   const cat = String(catLabel || 'product').toLowerCase()
-  return `<div style="background:#f8f9fa;border:1px solid #e8e8e8;border-left:3px solid #607d8b;border-radius:6px;padding:14px 18px;margin:24px 0;font-size:13.5px;line-height:1.7;color:#444;">
-<strong>What we can't tell you:</strong> We haven't run this ${cat} through a lab or used it hands-on, so we can't speak to long-term durability — how it holds up after two years of daily use is something only time and owner reviews reveal. What we can do is read the spec sheet carefully, compare it honestly against rivals, and track its real price every day.
+  return `<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-left:3px solid #5f5f5f;border-radius:6px;padding:14px 18px;margin:24px 0;font-size:13.5px;line-height:1.7;color:#888;">
+<strong style="color:#c8c8c8;">What we can't tell you:</strong> We haven't run this ${cat} through a lab or used it hands-on, so we can't speak to long-term durability — how it holds up after two years of daily use is something only time and owner reviews reveal. What we can do is read the spec sheet carefully, compare it honestly against rivals, and track its real price every day.
 </div>`
 }
 
@@ -142,7 +142,7 @@ function aOrAn(str) {
 // Diagnosis-style opener (DNA: teach through diagnosis, start with the problem)
 function guideOpener(catLabel, catSingular, seedStr) {
   const build = seededPick(GUIDE_PROBLEMS, seedStr)
-  return `<p style="font-size:16px;line-height:1.8;color:#333;margin:24px 0;">${build(catLabel, catSingular)} We haven't lab-tested these — our picks come from spec analysis, price tracking, and patterns in public owner reviews.</p>`
+  return `<p style="font-size:16px;line-height:1.8;color:#c8c8c8;margin:24px 0;">${build(catLabel, catSingular)} We haven't lab-tested these — our picks come from spec analysis, price tracking, and patterns in public owner reviews.</p>`
 }
 
 const REVIEW_LEADS = [

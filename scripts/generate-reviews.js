@@ -14,7 +14,7 @@ const { reviewSchema, slugify } = require('./lib/schema')
 const { reviewIntroLead, trackingSinceNote, cantTellYouBlock, voiceLint } = require('./lib/voice')
 const {
   prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock,
-  postShell, specScorecard, howItStacksUp, tocBlock, specsAccordion,
+  postShell, specScorecard, howItStacksUp, tocBlock, specsAccordion, telegramCTA, reviewsBlock, productImageGallery,
 } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
@@ -217,9 +217,156 @@ function buildWhoShouldBuy(specs, catLabel, features) {
     bullets.push('Households comparing multiple options in this price segment')
   }
 
-  return `<ul style="font-size:15px;line-height:1.8;color:#333;margin:0;padding-left:20px;">
+  return `<ul style="font-size:15px;line-height:1.8;color:#c8c8c8;margin:0;padding-left:20px;">
 ${bullets.map(b => `  <li>${b}</li>`).join('\n')}
 </ul>`
+}
+
+function buildInYourKitchen(specs, catLabel, name, features) {
+  const capacity = getSpecVal(specs, 'Capacity', 'Volume', 'Bowl Capacity', 'Jug Capacity')
+  const wattage  = getSpecVal(specs, 'Output Wattage', 'Wattage')
+  const ctrl     = getSpecVal(specs, 'Controller Type', 'Control Method')
+  const presets  = getSpecVal(specs, 'Number of Presets', 'Cooking Presets', 'Preset Programs')
+  const familySize = capacity ? familySizeFromCapacity(capacity) : null
+  const w = wattage ? parseFloat(wattage.replace(/[^0-9.]/g, '')) : 0
+  const c = capacity ? parseFloat(capacity.replace(/[^0-9.]/g, '')) : 0
+  const scenarios = []
+
+  // Scenario 1: family cooking
+  if (familySize && c) {
+    const batchExample = c >= 6 ? 'a whole chicken, 1kg of fries, or a tray of chicken wings' :
+                         c >= 4 ? '500g of fries, chicken thighs, or a medium-sized fish' :
+                         '2–3 portions of fries or a couple of chicken pieces'
+    scenarios.push({
+      icon: '🍽',
+      heading: `Cooking for ${familySize}`,
+      text: `The ${capacity} basket fits ${batchExample} in a single batch — no splitting across two rounds for a standard meal.`
+    })
+  }
+
+  // Scenario 2: speed/power
+  if (w >= 1500) {
+    const preheat = w >= 2000 ? '2–3 minutes' : '3–4 minutes'
+    scenarios.push({
+      icon: '⚡',
+      heading: 'Weeknight meals',
+      text: `At ${wattage}, this preheats in roughly ${preheat}. Frozen chips are crispy in 12–15 minutes from cold. It's fast enough for a last-minute dinner without the oven warm-up wait.`
+    })
+  }
+
+  // Scenario 3: controls
+  if (ctrl && /touch|digital/i.test(ctrl) && presets) {
+    scenarios.push({
+      icon: '📱',
+      heading: 'Using the presets',
+      text: `The ${presets} preset programs cover the most common tasks — fries, chicken, fish, bake — with time and temperature pre-set. Useful if you don't want to look up temperatures for every recipe.`
+    })
+  } else if (ctrl && /manual|knob/i.test(ctrl)) {
+    scenarios.push({
+      icon: '🔧',
+      heading: 'Manual control',
+      text: `Dial controls mean no app or display to learn. Set the timer, set the temperature, and walk away. Simple to use for people who want a no-fuss appliance.`
+    })
+  }
+
+  // Scenario 4: features highlight
+  const hasKeepWarm = features.some(f => /keep.?warm/i.test(f))
+  const hasFrost = features.some(f => /frozen|defrost/i.test(f))
+  if (hasFrost) {
+    scenarios.push({
+      icon: '❄',
+      heading: 'Straight from the freezer',
+      text: `Frozen-to-crispy without defrosting first. Useful for frozen snacks, nuggets, and fish fingers — add 3–5 minutes to the usual cook time.`
+    })
+  } else if (hasKeepWarm) {
+    scenarios.push({
+      icon: '🌡',
+      heading: 'Serving staggered meals',
+      text: `Keep-warm mode holds food at serving temperature so if someone comes to the table late, the food isn't cold. Typical keep-warm sits around 60–70°C.`
+    })
+  }
+
+  if (!scenarios.length) return ''
+
+  const cards = scenarios.map(s => `<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:16px 18px;flex:1;min-width:220px;">
+  <p style="font-size:15px;font-weight:700;color:#f0f0f0;margin:0 0 6px;">${s.heading}</p>
+  <p style="font-size:14px;line-height:1.7;color:#a0a0a0;margin:0;">${s.text}</p>
+</div>`).join('\n')
+
+  return `<h2 style="font-size:20px;font-weight:700;margin:32px 0 14px;color:#f0f0f0;">In Your Kitchen</h2>
+<p style="font-size:14px;color:#888;margin:0 0 14px;">Concrete scenarios based on the documented specs — not a lab test.</p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;">
+${cards}
+</div>`
+}
+
+function buildSpecsExplained(specs, catLabel) {
+  const rows = []
+  const w = getSpecVal(specs, 'Output Wattage', 'Wattage')
+  const c = getSpecVal(specs, 'Capacity', 'Volume', 'Bowl Capacity', 'Jug Capacity')
+  const ctrl = getSpecVal(specs, 'Controller Type', 'Control Method')
+  const temp = getSpecVal(specs, 'Temperature Range', 'Max Temperature', 'Temperature Control')
+  const material = getSpecVal(specs, 'Basket Material', 'Inner Material', 'Non-Stick Coating')
+  const wVal = w ? parseFloat(w.replace(/[^0-9.]/g, '')) : 0
+  const cVal = c ? parseFloat(c.replace(/[^0-9.]/g, '')) : 0
+
+  if (w) rows.push({
+    label: 'Wattage',
+    value: w,
+    explain: wVal >= 2000
+      ? 'High power. Faster preheat (~2 min), better performance cooking large batches from frozen.'
+      : wVal >= 1500
+      ? 'Standard power for this category. Preheats in 3–4 minutes, adequate for everyday cooking.'
+      : 'Lower wattage — fine for small portions but may need a couple of extra minutes on larger batches.'
+  })
+
+  if (c) rows.push({
+    label: 'Capacity',
+    value: c,
+    explain: cVal >= 6
+      ? 'Large basket — good for families of 4+. You can cook a whole chicken or 1kg of fries in one go.'
+      : cVal >= 4
+      ? 'Mid-size — works for 3–4 portions. Most popular size for Indian households.'
+      : "Compact — best for 1–2 people. Easy to store but won’t handle large batches."
+  })
+
+  if (ctrl) rows.push({
+    label: 'Controls',
+    value: ctrl,
+    explain: /touch|digital/i.test(ctrl)
+      ? 'Digital/touch panel with preset programs. More features but slightly more to learn up front.'
+      : /manual|knob|mechanical/i.test(ctrl)
+      ? 'Mechanical knobs — zero learning curve. Set time and temp, go.'
+      : `${ctrl} — check the product page for preset details.`
+  })
+
+  if (temp) rows.push({
+    label: 'Temperature range',
+    value: temp,
+    explain: 'Higher maximum (200°C+) lets you get a proper crisp on chips and frozen foods. Lower temps (80–120°C) are used for dehydrating or gentle baking.'
+  })
+
+  if (material) rows.push({
+    label: 'Basket coating',
+    value: material,
+    explain: /pfoa/i.test(material)
+      ? 'PFOA-free coating noted explicitly — avoids the chemical linked to older non-stick concerns.'
+      : 'Non-stick coating. Avoid metal utensils; hand-wash recommended to preserve the coating.'
+  })
+
+  if (!rows.length) return ''
+
+  const tableRows = rows.map(r => `<tr>
+  <td style="padding:10px 14px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#888;font-weight:700;white-space:nowrap;vertical-align:top;border-bottom:1px solid #2a2a2a;width:22%;">${r.label}</td>
+  <td style="padding:10px 14px;font-size:13px;color:#e67e22;font-weight:700;font-family:'JetBrains Mono',ui-monospace,monospace;vertical-align:top;border-bottom:1px solid #2a2a2a;white-space:nowrap;width:18%;">${r.value}</td>
+  <td style="padding:10px 14px;font-size:13.5px;color:#c8c8c8;vertical-align:top;border-bottom:1px solid #2a2a2a;line-height:1.6;">${r.explain}</td>
+</tr>`).join('\n')
+
+  return `<h2 style="font-size:20px;font-weight:700;margin:32px 0 14px;color:#f0f0f0;">Key Specs Explained</h2>
+<p style="font-size:14px;color:#888;margin:0 0 12px;">What the spec sheet means in plain language.</p>
+<table style="width:100%;border-collapse:collapse;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;overflow:hidden;">
+${tableRows}
+</table>`
 }
 
 function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []) {
@@ -236,16 +383,23 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
 
   const intro         = buildIntro(name, specs, catLabel, seg)
   const bodyCopy      = (CAT_BODY[catSlug] || (() => ''))(specs, seg)
+  const rating        = product._legacy?.rating
+  const reviewCount   = product._legacy?.review_count
+  const reviewsHTML   = reviewsBlock(product.reviews, rating, reviewCount)
   const specsHTML     = specTable(specs)
-  const specsAccHTML  = specsAccordion(specsHTML || '<p style="color:#666;font-size:14px;">Refer to the Amazon product page for full specifications.</p>', 'Full Specifications')
+  const specsAccHTML  = specsAccordion(specsHTML || '<p style="color:#888;font-size:14px;">Refer to the Amazon product page for full specifications.</p>', 'Full Specifications')
   const featuresHTML  = featureHighlights(features)
   const whoHTML       = buildWhoShouldBuy(specs, catLabel, features)
+  const galleryHTML   = productImageGallery(product)
+  const kitchenHTML   = buildInYourKitchen(specs, catLabel, name, features)
+  const specsExplHTML = buildSpecsExplained(specs, catLabel)
   const asinSlug      = `review-${slugify(brand)}-${asin.toLowerCase()}`
   const productId     = product.product_id || null
   const sparkline     = productId ? sparklineSVG(productId, PRICE_SERIES_DIR) : ''
   const introLead     = reviewIntroLead(asin)
   const trackNote     = productId ? trackingSinceNote(productId, PRICE_SERIES_DIR) : null
 
+  const productImg = product._legacy?.img || ''
   const { pros, cons } = prosConsFromSpecs(product, categoryProducts, catLabel)
   const capacity  = getSpecVal(specs, 'Capacity', 'Volume', 'Bowl Capacity', 'Jug Capacity')
   const whoFor    = (capacity && familySizeFromCapacity(capacity)) || 'everyday home use'
@@ -274,78 +428,91 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
 
   return postShell(`${asciDisclosure()}
 
-<nav style="font-size:13px;color:#888;margin-bottom:20px;">
-<a href="/" style="color:#666;">Home</a> › <a href="/best-${catSlug}/" style="color:#666;">Best ${catLabel}s in India ${YEAR}</a> › ${name.substring(0, 50)}… Review
+<nav style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#5f5f5f;margin-bottom:24px;">
+<a href="/" style="color:#888;text-decoration:none;">Home</a> <span style="color:#3a3a3a;">›</span> <a href="/best-${catSlug}/" style="color:#888;text-decoration:none;">Best ${catLabel}s in India ${YEAR}</a> <span style="color:#3a3a3a;">›</span> <span style="color:#c8c8c8;">${name.substring(0, 50)}…</span>
 </nav>
 
-<h1 style="font-size:28px;font-weight:800;line-height:1.25;margin:0 0 18px;color:#1a1a1a;">${verdictName} Review — Worth Buying in India ${YEAR}?</h1>
+<h1 style="font-size:32px;font-weight:800;line-height:1.15;margin:0 0 20px;color:#f0f0f0;letter-spacing:-0.02em;">${verdictName} Review — Worth Buying in India ${YEAR}?</h1>
 
 ${verdictHTML}
 ${updatedLine()}
 ${tocHTML}
 
-<p style="font-size:16px;line-height:1.8;color:#333;">${introLead} ${intro}</p>
-${bodyCopy ? `<p style="font-size:15px;line-height:1.9;color:#444;margin:14px 0 20px;">${bodyCopy}</p>` : ''}
+<p style="font-size:16px;line-height:1.8;color:#c8c8c8;">${introLead} ${intro}</p>
+${bodyCopy ? `<p style="font-size:15px;line-height:1.9;color:#a0a0a0;margin:14px 0 20px;">${bodyCopy}</p>` : ''}
 
-<div style="display:flex;gap:20px;flex-wrap:wrap;margin:20px 0;align-items:stretch;">
-<div style="flex:1.2;min-width:300px;background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;">
-  <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">${brand}</p>
-  <h2 style="font-size:17px;font-weight:700;margin:0 0 12px;line-height:1.4;">${name}</h2>
-  ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 10px;">Price trend (${YEAR}) ${sparkline}</p>` : ''}
-  ${trackNote ? `<p style="font-size:12.5px;color:#666;margin:0 0 10px;font-style:italic;">${trackNote}</p>` : ''}
-  <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
-     style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:14px;font-weight:700;padding:9px 20px;border-radius:4px;">
-    Check price on Amazon →
-  </a>
+<div style="display:flex;gap:20px;flex-wrap:wrap;margin:24px 0;align-items:stretch;">
+<div style="flex:1.2;min-width:300px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:20px;display:flex;gap:18px;align-items:flex-start;">
+  ${productImg ? `<img src="${productImg}" alt="${name}" loading="lazy" style="width:120px;height:120px;object-fit:contain;border-radius:6px;background:#141414;flex:0 0 120px;border:1px solid #2a2a2a;">` : ''}
+  <div style="flex:1;min-width:0;">
+    <p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 6px;">${brand}</p>
+    <h2 style="font-size:17px;font-weight:700;margin:0 0 10px;line-height:1.4;color:#f0f0f0;">${name}</h2>
+    ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 8px;font-family:'JetBrains Mono',ui-monospace,monospace;">Price trend (${YEAR}) ${sparkline}</p>` : ''}
+    ${trackNote ? `<p style="font-size:12px;color:#888;margin:0 0 10px;font-style:italic;">${trackNote}</p>` : ''}
+    <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
+       style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:14px;font-weight:700;padding:9px 20px;border-radius:4px;">
+      Check price on Amazon →
+    </a>
+  </div>
 </div>
 ${scorecardHTML ? `<div style="flex:1;min-width:300px;">${scorecardHTML.replace('margin:24px 0;', 'margin:0;')}</div>` : ''}
 </div>
+
+${galleryHTML}
 
 ${prosConsBlock(pros, cons)}
 
 ${stacksUpHTML}
 
-${featuresHTML ? `<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;">What Makes This Stand Out</h2>\n${featuresHTML}` : ''}
+${featuresHTML ? `<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;color:#f0f0f0;">What Makes This Stand Out</h2>\n${featuresHTML}` : ''}
 
-<h2 id="who-for" style="font-size:20px;font-weight:700;margin:28px 0 10px;">Who Should Buy This?</h2>
+${kitchenHTML}
+
+${specsExplHTML}
+
+<h2 id="who-for" style="font-size:20px;font-weight:700;margin:28px 0 10px;color:#f0f0f0;">Who Should Buy This?</h2>
 ${whoHTML}
 
 ${cantTellYouBlock(catLabel)}
 
 ${specsAccHTML}
 
+${reviewsHTML}
+
 ${methodologyBlock(methodCtx)}
 
-<div style="background:#e3f2fd;border:1px solid #bbdefb;border-radius:6px;padding:14px 20px;margin:24px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-left:3px solid #e67e22;border-radius:0 6px 6px 0;padding:14px 20px;margin:24px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
   <div style="flex:1;min-width:180px;">
-    <p style="margin:0;font-size:14px;font-weight:700;color:#1565c0;">Track this price automatically</p>
-    <p style="margin:4px 0 0;font-size:13px;color:#444;">Get an email when this product hits its lowest tracked price on Amazon India.</p>
+    <p style="margin:0;font-size:14px;font-weight:700;color:#e67e22;font-family:'JetBrains Mono',ui-monospace,monospace;">Track this price automatically</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#888;">Get an email when this product hits its lowest tracked price on Amazon India.</p>
   </div>
-  <a href="/get-price-alerts/" style="display:inline-block;background:#1565c0;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:9px 18px;border-radius:4px;white-space:nowrap;">
+  <a href="/get-price-alerts/" style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:9px 18px;border-radius:4px;white-space:nowrap;">
     Set up price alert →
   </a>
 </div>
 
-<div style="background:#fff3e0;border:1px solid #ffe0b2;border-radius:6px;padding:16px 20px;margin:24px 0;">
-  <p style="margin:0 0 10px;font-weight:700;font-size:15px;">Ready to buy or want to check the latest price?</p>
+${telegramCTA()}
+
+<div style="background:#1a1a1a;border:1px solid rgba(230,126,34,0.35);border-radius:6px;padding:16px 20px;margin:24px 0;">
+  <p style="margin:0 0 10px;font-weight:700;font-size:15px;color:#f0f0f0;">Ready to buy or want to check the latest price?</p>
   <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
-     style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:14px;font-weight:700;padding:9px 20px;border-radius:4px;">
+     style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:14px;font-weight:700;padding:9px 20px;border-radius:4px;">
     Check price on Amazon India →
   </a>
-  <p style="margin:10px 0 0;font-size:12px;color:#999;">Amazon prices change frequently. Click to see the current price.</p>
+  <p style="margin:10px 0 0;font-size:12px;color:#5f5f5f;font-family:'JetBrains Mono',ui-monospace,monospace;">Amazon prices change frequently. Click to see the current price.</p>
 </div>
 
-${faqs.length ? `<h2 id="faq" style="font-size:20px;font-weight:700;margin:32px 0 12px;">Frequently Asked Questions</h2>
-${faqs.map(([q, a]) => `<details style="border:1px solid #e0e0e0;border-radius:4px;margin-bottom:8px;">
-  <summary style="padding:12px 16px;cursor:pointer;font-weight:600;font-size:14px;background:#fafafa;">${q}</summary>
-  <div style="padding:12px 16px;font-size:14px;line-height:1.7;color:#333;">${a}</div>
+${faqs.length ? `<h2 id="faq" style="font-size:20px;font-weight:700;margin:32px 0 12px;color:#f0f0f0;">Frequently Asked Questions</h2>
+${faqs.map(([q, a]) => `<details style="border:1px solid #2a2a2a;border-radius:4px;margin-bottom:8px;background:#1a1a1a;">
+  <summary style="padding:12px 16px;cursor:pointer;font-weight:600;font-size:14px;color:#f0f0f0;background:#1a1a1a;">${q}</summary>
+  <div style="padding:12px 16px;font-size:14px;line-height:1.7;color:#c8c8c8;border-top:1px solid #2a2a2a;">${a}</div>
 </details>`).join('\n')}` : ''}
 
 ${relatedLinks(asin, catSlug, slugIndex, catLabel)}
 
-<hr style="margin:32px 0;border:none;border-top:1px solid #e0e0e0;">
-<p style="font-size:13px;color:#888;">
-  <a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← Compare all ${catLabel}s in India ${YEAR}</a>
+<hr style="margin:32px 0;border:none;border-top:1px solid #2a2a2a;">
+<p style="font-size:13px;color:#888;font-family:'JetBrains Mono',ui-monospace,monospace;">
+  <a href="/best-${catSlug}/" style="color:#e67e22;font-weight:600;">← Compare all ${catLabel}s in India ${YEAR}</a>
 </p>
 
 <script type="application/ld+json">
@@ -357,6 +524,7 @@ async function main() {
   const args      = process.argv.slice(2)
   const dryRun    = args.includes('--dry-run')
   const catFilter = args.includes('--cat') ? args[args.indexOf('--cat') + 1] : null
+  const asinFilter = args.includes('--asin') ? String(args[args.indexOf('--asin') + 1]).toUpperCase() : null
   const limit     = args.includes('--limit') ? parseInt(args[args.indexOf('--limit') + 1]) || 9999 : 9999
 
   if (!WP || !USER || !PASS) { console.error('Missing WP credentials in .env'); process.exit(1) }
@@ -370,6 +538,7 @@ async function main() {
   const queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'))
     .filter(o => o.type === 'review')
     .filter(o => !catFilter || o.category === catFilter)
+    .filter(o => !asinFilter || String(o.asin).toUpperCase() === asinFilter)
     .slice(0, limit)
 
   console.log(`Review queue: ${queue.length} items`)
@@ -383,7 +552,16 @@ async function main() {
     const brand   = product.brand_id || 'product'
     const asin    = op.asin
     const catSlug = op.category
-    const slug    = `review-${slugify(brand)}-${asin.toLowerCase()}`
+    // Slug: readable name-based e.g. ninja-air-fryer-max-pro-6-2l-review
+    const _ns0 = name
+      .replace(/\s*[\[(][^\])]*/g, '')    // strip (AF180IN...) and [...]
+      .replace(/\s*[|\\].*/g, '')         // strip at pipe separator
+      .trim()
+    // Strip at wattage only if ≥3 words remain after the strip
+    const _nsW = _ns0.replace(/\s+\d+\s*W\b.*/i, '').trim()
+    const nameForSlug = (_nsW.split(/\s+/).length >= 3 ? _nsW : _ns0)
+      .split(/\s+/).slice(0, 6).join(' ')
+    const slug    = `${slugify(nameForSlug)}-review`
     const rawName = name.replace(/\s*[\\|,].*$/, '').trim()
     const short   = rawName.length > 55 ? rawName.substring(0, 52) + '…' : rawName
     const title   = `${short} Review — Worth Buying in India ${YEAR}?`

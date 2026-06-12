@@ -87,11 +87,11 @@ const VERDICT_FRAMES = [
 function verdictBox({ name, catLabel, seg, whoFor, keyStrength, link, seed = '' }) {
   const frame = seededPick(VERDICT_FRAMES, seed)
   const segLabel = String(seg || 'mid-range').replace(/-/g, ' ')
-  return `<div style="background:#fffbf2;border:1px solid #f0d9a8;border-left:4px solid #e8a020;border-radius:0 6px 6px 0;padding:16px 20px;margin:0 0 20px;">
-  <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:#b07b10;">PriceHawk verdict · ${segLabel}</p>
-  <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#333;">${frame(name, whoFor, keyStrength)} The full reasoning, specs and honest gaps are below.</p>
+  return `<div style="background:rgba(230,126,34,0.07);border:1px solid rgba(230,126,34,0.28);border-left:4px solid #e67e22;border-radius:0 6px 6px 0;padding:16px 20px;margin:0 0 20px;">
+  <p style="margin:0 0 4px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#e67e22;font-family:'JetBrains Mono',ui-monospace,monospace;">PriceHawk verdict · ${segLabel}</p>
+  <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#c8c8c8;">${frame(name, whoFor, keyStrength)} The full reasoning, specs and honest gaps are below.</p>
   <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
-     style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
+     style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
     Check today's price on Amazon →
   </a>
 </div>`
@@ -102,22 +102,22 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 // Recency signal — honest: specs reviewed at generation time, price genuinely tracked daily
 function updatedLine(date = new Date()) {
   const d = date instanceof Date ? date : new Date(date)
-  return `<p style="font-size:12.5px;color:#888;margin:0 0 16px;">Specs reviewed ${MONTHS[d.getMonth()]} ${d.getFullYear()} · Amazon price tracked daily by PriceHawk</p>`
+  return `<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#5f5f5f;margin:0 0 16px;letter-spacing:0.02em;">Specs reviewed ${MONTHS[d.getMonth()]} ${d.getFullYear()} · Amazon price tracked daily by PriceHawk</p>`
 }
 
 // Two-column pros / falls-short block. Renders only sides that have content.
 function prosConsBlock(pros, cons) {
   if (!pros.length && !cons.length) return ''
-  const col = (title, items, color, bg) => items.length ? `<div style="flex:1;min-width:240px;background:${bg};border-radius:6px;padding:14px 18px;">
+  const col = (title, items, color, bg) => items.length ? `<div style="flex:1;min-width:240px;background:${bg};border-radius:6px;padding:14px 18px;border:1px solid rgba(255,255,255,0.06);">
     <p style="margin:0 0 8px;font-size:13px;font-weight:700;color:${color};">${title}</p>
-    <ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.7;color:#333;">
+    <ul style="margin:0;padding-left:18px;font-size:14px;line-height:1.7;color:#c8c8c8;">
       ${items.map(i => `<li>${i}</li>`).join('\n      ')}
     </ul>
   </div>` : ''
-  return `<h2 id="pros-cons" style="font-size:20px;font-weight:700;margin:28px 0 10px;">The Good and the Not-So-Good</h2>
+  return `<h2 id="pros-cons" style="font-size:20px;font-weight:700;margin:28px 0 10px;color:#f0f0f0;">The Good and the Not-So-Good</h2>
 <div style="display:flex;gap:14px;flex-wrap:wrap;margin:0 0 8px;">
-  ${col('What works in its favour', pros, '#2e7d32', '#f1f8e9')}
-  ${col('Where it falls short', cons, '#c62828', '#fdf3f2')}
+  ${col('What works in its favour', pros, '#4ade80', 'rgba(39,174,96,0.12)')}
+  ${col('Where it falls short', cons, '#f87171', 'rgba(231,76,60,0.12)')}
 </div>`
 }
 
@@ -125,7 +125,7 @@ function prosConsBlock(pros, cons) {
 // Outer div spans the viewport; inner recenters at a readable wide max.
 function wideShell(innerHtml) {
   return `<div style="width:100vw;position:relative;left:calc(50% - 50vw);">
-<div style="max-width:1200px;margin:0 auto;padding:0 24px;box-sizing:border-box;">
+<div style="max-width:none;margin:0 auto;padding:0 40px;box-sizing:border-box;">
 ${innerHtml}
 </div>
 </div>`
@@ -169,12 +169,12 @@ function specScorecard(product, categoryProducts, catLabel) {
   if (!rows.length) return ''
   const n = (categoryProducts || []).length
   const bar = r => `<div style="display:grid;grid-template-columns:130px 1fr 56px;gap:10px;align-items:center;margin:0 0 8px;">
-    <span style="font-size:13px;font-weight:600;color:#444;">${r.label}</span>
-    <div style="background:#eee;border-radius:4px;height:10px;overflow:hidden;"><div style="background:#e8a020;height:10px;width:${Math.round(r.score * 10)}%;"></div></div>
-    <span style="font-size:13px;font-weight:700;color:#333;text-align:right;">${r.display}</span>
+    <span style="font-size:13px;font-weight:600;color:#c8c8c8;">${r.label}</span>
+    <div style="background:#2a2a2a;border-radius:4px;height:10px;overflow:hidden;"><div style="background:#e67e22;height:10px;width:${Math.round(r.score * 10)}%;"></div></div>
+    <span style="font-size:13px;font-weight:700;color:#f0f0f0;text-align:right;">${r.display}</span>
   </div>`
-  return `<div id="scorecard" style="background:#fafafa;border:1px solid #e8e8e8;border-radius:8px;padding:18px 22px;margin:24px 0;">
-  <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#1a1a1a;">PriceHawk Spec Score</p>
+  return `<div id="scorecard" style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:18px 22px;margin:24px 0;">
+  <p style="margin:0 0 12px;font-size:14px;font-weight:700;color:#f0f0f0;">PriceHawk Spec Score</p>
   ${rows.map(bar).join('\n  ')}
   <p style="margin:10px 0 0;font-size:12px;color:#888;line-height:1.5;">Scored against the ${n} ${cat}s in our tracker using documented specifications — not lab tests. Price position: a lower price scores higher.</p>
 </div>`
@@ -208,8 +208,8 @@ function howItStacksUp(product, categoryProducts, catLabel) {
   const items = []
   if (cheaper) items.push(diffLine(cheaper, 'spends less'))
   if (pricier) items.push(diffLine(pricier, 'spends more'))
-  return `<h2 id="stacks-up" style="font-size:20px;font-weight:700;margin:28px 0 10px;">How It Stacks Up Against Rivals</h2>
-<ul style="font-size:14.5px;line-height:1.7;color:#333;margin:0;padding-left:20px;">
+  return `<h2 id="stacks-up" style="font-size:20px;font-weight:700;margin:28px 0 10px;color:#f0f0f0;">How It Stacks Up Against Rivals</h2>
+<ul style="font-size:14.5px;line-height:1.7;color:#c8c8c8;margin:0;padding-left:20px;">
 ${items.join('\n')}
 </ul>`
 }
@@ -217,9 +217,9 @@ ${items.join('\n')}
 // Jump-link table of contents (RTINGS pattern)
 function tocBlock(entries) {
   if (!entries?.length) return ''
-  return `<nav style="background:#f8f9fa;border:1px solid #e8e8e8;border-radius:6px;padding:12px 18px;margin:0 0 20px;font-size:13px;">
-  <span style="font-weight:700;color:#666;margin-right:10px;">Jump to:</span>
-  ${entries.map(e => `<a href="#${e.id}" style="color:#e65100;text-decoration:none;font-weight:600;margin-right:14px;white-space:nowrap;">${e.label}</a>`).join('\n  ')}
+  return `<nav style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:12px 18px;margin:0 0 20px;font-size:13px;font-family:'JetBrains Mono',ui-monospace,monospace;">
+  <span style="font-weight:700;color:#888;margin-right:10px;">Jump to:</span>
+  ${entries.map(e => `<a href="#${e.id}" style="color:#e67e22;text-decoration:none;font-weight:600;margin-right:14px;white-space:nowrap;">${e.label}</a>`).join('\n  ')}
 </nav>`
 }
 
@@ -245,7 +245,7 @@ main.wp-block-group,main.wp-block-group-is-layout-constrained{margin-top:0!impor
 .entry-content.has-global-padding>*,.is-layout-constrained>*,.entry-content>*{max-width:none!important}
 .has-global-padding>*{max-width:none!important;--wp--style--global--content-size:100%!important;--wp--style--global--wide-size:100%!important}
 .ph-post-hdr a:hover{color:#e67e22!important}
-@media (max-width:768px){.ph-post-nav{display:none!important}.ph-post-article{padding:20px 16px!important;border-radius:0!important}}
+@media (max-width:768px){.ph-post-nav{display:none!important}.ph-post-wrap{padding:0!important}.ph-post-article{padding:20px 16px!important;border-radius:0!important}}
 </style>
 <div style="background:#0f0f0f;min-height:100vh;font-family:'Inter',system-ui,sans-serif;">
 <header class="ph-post-hdr" style="position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:32px;padding:14px 40px;border-bottom:1px solid #2a2a2a;background:rgba(15,15,15,0.92);backdrop-filter:blur(10px);">
@@ -257,8 +257,8 @@ main.wp-block-group,main.wp-block-group-is-layout-constrained{margin-top:0!impor
     <a href="/price-drops/" style="padding:8px 14px;font-size:13px;border-radius:6px;border:1px solid rgba(230,126,34,0.55);color:#e67e22;text-decoration:none;font-weight:600;">Alerts</a>
   </div>
 </header>
-<div style="max-width:1200px;margin:28px auto 0;padding:0 20px;box-sizing:border-box;">
-<article class="ph-post-article" style="background:#ffffff;border-radius:12px;padding:36px 44px;box-sizing:border-box;color:#333;">
+<div class="ph-post-wrap" style="max-width:1440px;margin:0 auto;padding:0 40px 60px;box-sizing:border-box;">
+<article class="ph-post-article" style="background:transparent;padding:36px 0;box-sizing:border-box;color:#f0f0f0;font-family:'Inter',system-ui,sans-serif;line-height:1.7;">
 ${articleHtml}
 </article>
 </div>
@@ -287,17 +287,196 @@ ${articleHtml}
 // without losing the data. Opens on click. id="specs" anchors the TOC link.
 function specsAccordion(specsHTML, label = 'Full Specifications') {
   if (!specsHTML) return ''
-  return `<details id="specs" style="border:1px solid #e0e0e0;border-radius:6px;margin:28px 0;">
-  <summary style="padding:14px 20px;cursor:pointer;font-size:16px;font-weight:700;color:#1a1a1a;background:#fafafa;border-radius:6px;user-select:none;display:flex;justify-content:space-between;align-items:center;">
-    ${label}<span style="font-size:12px;color:#999;font-weight:400;">click to expand</span>
+  return `<details id="specs" style="border:1px solid #2a2a2a;border-radius:6px;margin:28px 0;background:#1a1a1a;">
+  <summary style="padding:14px 20px;cursor:pointer;font-size:16px;font-weight:700;color:#f0f0f0;background:#1a1a1a;border-radius:6px;user-select:none;display:flex;justify-content:space-between;align-items:center;">
+    ${label}<span style="font-size:12px;color:#5f5f5f;font-weight:400;">click to expand</span>
   </summary>
-  <div style="padding:16px 20px;border-top:1px solid #e0e0e0;">
+  <div style="padding:16px 20px;border-top:1px solid #2a2a2a;color:#c8c8c8;">
     ${specsHTML}
   </div>
 </details>`
 }
 
+const TG_URL = process.env.TELEGRAM_CHANNEL_URL || 'https://t.me/pricehawkdeals'
+
+function telegramCTA() {
+  return `<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-left:3px solid #27ae60;border-radius:0 6px 6px 0;padding:14px 20px;margin:24px 0;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+  <div style="flex:1;min-width:180px;">
+    <p style="margin:0;font-size:14px;font-weight:700;color:#27ae60;font-family:'JetBrains Mono',ui-monospace,monospace;">Get deal alerts on Telegram</p>
+    <p style="margin:4px 0 0;font-size:13px;color:#888;">We post genuine price drops on kitchen appliances — no spam, deals only.</p>
+  </div>
+  <a href="${TG_URL}" target="_blank" rel="nofollow noopener"
+     style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:9px 18px;border-radius:4px;white-space:nowrap;">
+    Join PriceHawk Deals →
+  </a>
+</div>`
+}
+
+// Strip Amazon mobile UI boilerplate from scraped review text
+function _cleanReviewText(text) {
+  if (!text) return ''
+  return text
+    .replace(/Brief content visible, double tap to read full content\.\n?/gi, '')
+    .replace(/Full content visible, double tap to read brief content\.\n?/gi, '')
+    .replace(/Read more\s*Read less\n?.*/si, '')
+    .replace(/\d+ people? found this.*/si, '')
+    .trim()
+}
+
+// Filter junk from feature_highlights (URLs, raw platform strings, short fragments)
+function _cleanHighlights(arr) {
+  if (!Array.isArray(arr)) return []
+  return arr.filter(s => {
+    if (typeof s !== 'string') return false
+    if (s.includes('http') || s.includes('display.html') || s.includes('nodeId')) return false
+    if (s.includes('.jpg') || s.includes('.png') || s.includes('Cameras,')) return false
+    // Keep if it reads like a real sentence: spaces, no raw HTML, >20 chars, starts with capital/number/quote
+    const clean = s.trim()
+    return clean.length >= 20 && /^[A-Z0-9"']/.test(clean) && !/\d+ positive\d+ negative/.test(clean)
+  }).slice(0, 3)
+}
+
+// Build 2-3 sentence sentiment summary from structured review data
+function _buildSentimentSummary(dist, rating, reviewCount, sentimentScore, pos, crit, highlights) {
+  const total = (dist['5_star']||0)+(dist['4_star']||0)+(dist['3_star']||0)+(dist['2_star']||0)+(dist['1_star']||0)
+  const positivePct = total ? Math.round(((dist['5_star']||0)+(dist['4_star']||0))/total*100) : null
+  const criticalPct = total ? Math.round(((dist['1_star']||0)+(dist['2_star']||0))/total*100) : null
+  const sentences = []
+
+  // Sentence 1: overall verdict
+  if (rating && reviewCount && positivePct != null) {
+    const verdict = positivePct >= 85 ? 'strongly positive' : positivePct >= 70 ? 'generally positive' : 'mixed'
+    sentences.push(`${positivePct}% of the ${Number(reviewCount).toLocaleString()} Indian buyers rate it 4 or 5 stars, putting the overall consensus firmly in ${verdict} territory.`)
+  }
+
+  // Sentence 2: what buyers liked (from highlights or positive review)
+  const hl = highlights[0]
+  const posText = _cleanReviewText(pos?.text || '')
+  if (hl) {
+    sentences.push(hl.charAt(0).toUpperCase() + hl.slice(1).replace(/\.$/, '') + '.')
+  } else if (posText) {
+    const snippet = posText.split('.')[0].trim()
+    if (snippet.length > 20 && snippet.length < 160) sentences.push(snippet + '.')
+  }
+
+  // Sentence 3: concern or confidence note
+  if (crit && criticalPct != null && criticalPct > 3) {
+    const critText = _cleanReviewText(crit.text || '')
+    const concern = critText.split('.')[0].trim()
+    if (concern.length > 20 && concern.length < 160) {
+      sentences.push(`The main concern raised by a minority (${criticalPct}%): ${concern.charAt(0).toLowerCase() + concern.slice(1)}.`)
+    }
+  } else if (sentimentScore != null && sentimentScore >= 8) {
+    sentences.push(`At a sentiment score of ${sentimentScore}/10, negative feedback is limited — mostly outlier service issues rather than product faults.`)
+  }
+
+  return sentences.slice(0, 3).join(' ')
+}
+
+function reviewsBlock(reviews, rating, reviewCount) {
+  if (!reviews) return ''
+  const dist = reviews.star_distribution || {}
+  const total = (dist['5_star']||0)+(dist['4_star']||0)+(dist['3_star']||0)+(dist['2_star']||0)+(dist['1_star']||0)
+  const sentimentScore = reviews.sentiment_score
+  const highlights = _cleanHighlights(reviews.feature_highlights)
+  const pos = reviews.top_positive
+  const crit = reviews.top_critical
+
+  const starBars = [5,4,3,2,1].map(n => {
+    const count = dist[`${n}_star`] || 0
+    const pct = total ? Math.round((count / total) * 100) : 0
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+  <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#888;width:16px;text-align:right;">${n}★</span>
+  <div style="flex:1;height:6px;background:#2a2a2a;border-radius:3px;overflow:hidden;">
+    <div style="height:100%;width:${pct}%;background:${pct>=50?'#e67e22':'#5f5f5f'};border-radius:3px;"></div>
+  </div>
+  <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#5f5f5f;width:28px;">${pct}%</span>
+</div>`
+  }).join('\n')
+
+  const scoreChip = sentimentScore != null
+    ? `<span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(39,174,96,0.15);color:#4ade80;border:1px solid rgba(39,174,96,0.3);">Sentiment ${sentimentScore}/10</span>`
+    : ''
+
+  const highlightList = highlights.length
+    ? `<ul style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:#c8c8c8;line-height:1.8;">
+${highlights.map(h => `  <li>${h}</li>`).join('\n')}
+</ul>` : ''
+
+  function reviewCard(rv, isPositive) {
+    if (!rv) return ''
+    const text = _cleanReviewText(rv.text)
+    if (!text) return ''
+    const short = text.length > 280 ? text.substring(0, 277) + '…' : text
+    const accentColor = isPositive ? '#4ade80' : '#f87171'
+    const bgColor = isPositive ? 'rgba(39,174,96,0.06)' : 'rgba(231,76,60,0.06)'
+    const borderColor = isPositive ? 'rgba(39,174,96,0.2)' : 'rgba(231,76,60,0.2)'
+    const label = isPositive ? 'Top Positive Review' : 'Critical Review'
+    const stars = '★'.repeat(rv.rating || 0) + '☆'.repeat(5 - (rv.rating || 0))
+    return `<div style="background:${bgColor};border:1px solid ${borderColor};border-radius:6px;padding:14px 16px;flex:1;min-width:0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+    <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;color:${accentColor};text-transform:uppercase;letter-spacing:0.07em;">${label}</span>
+    <span style="font-size:12px;color:#e67e22;letter-spacing:1px;">${stars}</span>
+    <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;color:#5f5f5f;">${rv.reviewer || ''}${rv.date ? ' · ' + rv.date : ''}</span>
+  </div>
+  <p style="font-size:13.5px;line-height:1.7;color:#c8c8c8;margin:0;">"${short}"</p>
+</div>`
+  }
+
+  const posCard = reviewCard(pos, true)
+  const critCard = reviewCard(crit, false)
+  const cardsRow = (posCard || critCard)
+    ? `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">${posCard}${critCard}</div>`
+    : ''
+
+  const ratingStr = rating ? `<span style="font-size:28px;font-weight:800;color:#f0f0f0;font-family:'JetBrains Mono',ui-monospace,monospace;">${rating}</span><span style="font-size:14px;color:#888;"> / 5</span>` : ''
+  const countStr = reviewCount ? `<span style="font-size:12px;color:#5f5f5f;font-family:'JetBrains Mono',ui-monospace,monospace;">&nbsp;(${Number(reviewCount).toLocaleString()} ratings)</span>` : ''
+  const sentimentSummary = _buildSentimentSummary(dist, rating, reviewCount, sentimentScore, pos, crit, highlights)
+
+  return `<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:20px 24px;margin:28px 0;">
+<h2 style="font-size:17px;font-weight:700;color:#f0f0f0;margin:0 0 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+  What Amazon Reviewers Say
+  ${scoreChip}
+</h2>
+${sentimentSummary ? `<p style="font-size:14px;line-height:1.75;color:#c8c8c8;margin:0 0 18px;border-left:3px solid rgba(230,126,34,0.4);padding-left:14px;">${sentimentSummary}</p>` : ''}
+<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;">
+  <div style="min-width:160px;">
+    <div style="margin-bottom:10px;">${ratingStr}${countStr}</div>
+    ${starBars}
+  </div>
+  <div style="flex:1;min-width:180px;">
+    <p style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.06em;font-family:'JetBrains Mono',ui-monospace,monospace;margin:0 0 4px;">What buyers highlight</p>
+    ${highlightList || '<p style="font-size:13px;color:#5f5f5f;margin:8px 0 0;">No highlights available.</p>'}
+  </div>
+</div>
+${cardsRow}
+<p style="font-size:11px;color:#5f5f5f;margin:12px 0 0;font-family:'JetBrains Mono',ui-monospace,monospace;">Based on Amazon India customer reviews. PriceHawk has not independently verified these claims.</p>
+</div>`
+}
+
+// Horizontal image gallery — uses _legacy.images[] when available, else main img
+function productImageGallery(product) {
+  const images = product._legacy?.images
+  const mainImg = product._legacy?.img
+  const name = product.product_name || product._legacy?.name || 'Product'
+
+  const imgs = Array.isArray(images) && images.length > 1 ? images : (mainImg ? [mainImg] : [])
+  if (imgs.length < 2) return ''
+
+  const thumbs = imgs.map((src, i) => `<div style="flex:0 0 auto;width:160px;height:160px;background:#141414;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;cursor:pointer;">
+  <img src="${src}" alt="${name} — view ${i+1}" loading="lazy" style="width:100%;height:100%;object-fit:contain;padding:8px;box-sizing:border-box;">
+</div>`).join('\n')
+
+  return `<div style="margin:28px 0;">
+<h2 style="font-size:17px;font-weight:700;color:#f0f0f0;margin:0 0 14px;">Product Gallery</h2>
+<div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin;scrollbar-color:#2a2a2a #0f0f0f;">
+${thumbs}
+</div>
+</div>`
+}
+
 module.exports = {
   prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock, median,
   wideShell, specScorecard, howItStacksUp, tocBlock, postShell, specsAccordion,
+  telegramCTA, reviewsBlock, productImageGallery,
 }

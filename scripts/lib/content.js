@@ -24,7 +24,7 @@ ${rows.map(([k, v]) => `  <tr style="border-bottom:1px solid #e8e8e8;">
 function featureHighlights(features, max = 3) {
   if (!Array.isArray(features) || !features.length) return ''
   const items = features.slice(0, max)
-  return `<ul style="font-size:15px;line-height:1.8;color:#333;margin:0;padding-left:20px;">
+  return `<ul style="font-size:15px;line-height:1.8;color:#c8c8c8;margin:0;padding-left:20px;">
 ${items.map(f => `  <li>${f}</li>`).join('\n')}
 </ul>`
 }
@@ -49,14 +49,14 @@ function getSpecVal(specs, ...keys) {
 }
 
 function asciDisclosure() {
-  return `<div style="background:#fff8e1;border-left:4px solid #f9a825;padding:10px 16px;font-size:13px;line-height:1.5;margin-bottom:20px;">
-<strong>Affiliate Disclosure:</strong> PriceHawk earns a commission on qualifying purchases made through links on this page. This never influences our editorial recommendations. As an Amazon Associate I earn from qualifying purchases.
+  return `<div style="background:#1a1a1a;border-left:4px solid #e67e22;padding:10px 16px;font-size:13px;line-height:1.5;margin-bottom:20px;border-radius:0 6px 6px 0;color:#888;font-family:'JetBrains Mono',ui-monospace,monospace;">
+<strong style="color:#e67e22;">Affiliate Disclosure:</strong> PriceHawk earns a commission on qualifying purchases made through links on this page. This never influences our editorial recommendations. As an Amazon Associate I earn from qualifying purchases.
 </div>`
 }
 
 function methodologyBlock(contextSentence) {
-  return `<div style="background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:14px 18px;margin:24px 0;font-size:13px;line-height:1.6;">
-<strong>PriceHawk Methodology:</strong> ${contextSentence} PriceHawk has not independently lab-tested this unit. All opinions are based on documented specifications and aggregated public user feedback — not hands-on testing.
+  return `<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:14px 18px;margin:24px 0;font-size:13px;line-height:1.6;border-left:3px solid #e67e22;color:#888;">
+<strong style="color:#c8c8c8;">PriceHawk Methodology:</strong> ${contextSentence} PriceHawk has not independently lab-tested this unit. All opinions are based on documented specifications and aggregated public user feedback — not hands-on testing.
 </div>`
 }
 
@@ -227,14 +227,14 @@ function relatedLinks(asin, catSlug, slugIndex, catLabel) {
   // Always link to category hub (fallback if not in index)
   const hubSlug = slugIndex['__hub__' + catSlug] || `best-${catSlug}`
   links.push(
-    `<a href="/${hubSlug}/" style="color:#e65100;text-decoration:none;font-weight:600;">Best ${catLabel}s in India →</a>`
+    `<a href="/${hubSlug}/" style="color:#e67e22;text-decoration:none;font-weight:600;">Best ${catLabel}s in India →</a>`
   )
 
   // Link to buying guide only when it differs from the hub (avoids duplicate link)
   const guideSlug = slugIndex['__guide__' + catSlug]
   if (guideSlug && guideSlug !== hubSlug) {
     links.push(
-      `<a href="/${guideSlug}/" style="color:#e65100;text-decoration:none;font-weight:600;">${catLabel} Buying Guide →</a>`
+      `<a href="/${guideSlug}/" style="color:#e67e22;text-decoration:none;font-weight:600;">${catLabel} Buying Guide →</a>`
     )
   }
 
@@ -248,8 +248,8 @@ function relatedLinks(asin, catSlug, slugIndex, catLabel) {
 
   if (!links.length) return ''
 
-  return `<div style="background:#fafafa;border:1px solid #e0e0e0;border-radius:6px;padding:14px 18px;margin:24px 0;">
-<p style="font-size:13px;font-weight:700;color:#444;margin:0 0 8px;text-transform:uppercase;letter-spacing:0.5px;">Related Pages</p>
+  return `<div style="background:#1a1a1a;border:1px solid #2a2a2a;border-radius:6px;padding:14px 18px;margin:24px 0;">
+<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;color:#888;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.06em;">Related Pages</p>
 <div style="display:flex;flex-wrap:wrap;gap:10px 20px;">
 ${links.map(l => `<span style="font-size:14px;">${l}</span>`).join('\n')}
 </div>

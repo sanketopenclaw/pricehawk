@@ -98,7 +98,8 @@ test('wideShell breaks out of theme column and centers wide content', () => {
   assert.ok(html.includes('INNER'))
   assert.ok(html.includes('100vw'))
   assert.ok(/calc\(50% - 50vw\)/.test(html))
-  assert.ok(/max-width:\s*1\d{3}px/.test(html))
+  // widescreen: no fixed reading-column cap
+  assert.ok(/max-width:\s*none/.test(html))
 })
 
 // --- postShell ---
@@ -114,9 +115,9 @@ test('postShell hides theme chrome and renders site header, nav, footer, light a
   assert.ok(html.includes('/buying-guide/'))
   assert.ok(html.includes('/price-drops/'))
   assert.ok(html.includes('/categories/'))
-  // dark shell + wide light article surface
+  // dark shell + widescreen light article surface
   assert.ok(html.includes('#0f0f0f'))
-  assert.ok(/max-width:\s*1200px/.test(html))
+  assert.ok(/max-width:\s*none/.test(html))
   // footer replica with disclosure line
   assert.ok(/earns a commission on purchases/.test(html))
 })

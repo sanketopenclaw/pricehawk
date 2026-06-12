@@ -20,6 +20,7 @@ const path = require('path')
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const { asciDisclosure, methodologyBlock, resolveOffer, metaDescription } = require('./lib/content')
 const { buildPageStyles } = require('./lib/styles')
+const { postShell } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -102,6 +103,30 @@ function sortByPopularity(products) {
   })
 }
 
+function buildProductSummary(product) {
+  const specs = product.specifications || {}
+  const cap  = specs['Capacity'] || specs['Volume'] || specs['Bowl Capacity'] || ''
+  const w    = specs['Output Wattage'] || specs['Wattage'] || ''
+  const ctrl = specs['Control Method'] || specs['Controller Type'] || ''
+  const feats = specs._features || []
+  const parts = []
+  if (cap)  parts.push(cap.replace(/\s*lit(re|er)s?\b/i, 'L'))
+  if (w)    parts.push(w.replace(/\s*Watts?\b/i, 'W'))
+  if (ctrl && ctrl.length < 20) parts.push(ctrl + ' controls')
+  if (parts.length < 3 && feats.length) {
+    const hint = feats[0].replace(/^[^a-zA-Z]+/, '').split('.')[0].split(',')[0].trim()
+    if (hint.length < 70) parts.push(hint)
+  }
+  return parts.slice(0, 3).join(' · ')
+}
+
+const SEG_BADGE = {
+  'budget':    { label: 'Budget Pick', color: '#27ae60' },
+  'mid-range': { label: 'Mid-Range',   color: '#e67e22' },
+  'premium':   { label: 'Premium',     color: '#3498db' },
+  'flagship':  { label: 'Flagship',    color: '#9b59b6' },
+}
+
 // ── Category Hub HTML ─────────────────────────────────────────────────────────
 
 function buildCategoryHubHTML(catSlug, products) {
@@ -115,16 +140,27 @@ function buildCategoryHubHTML(catSlug, products) {
   )]
 
   const productRows = sorted.map((p, i) => {
-    const link = resolveOffer(p).affiliate_url || `https://www.amazon.in/dp/${resolveOffer(p).external_id}?tag=${TAG}`
-    const name = p.product_name || p._legacy?.name || 'Product'
+    const offer = resolveOffer(p)
+    const link  = offer.affiliate_url || `https://www.amazon.in/dp/${offer.external_id}?tag=${TAG}`
+    const name  = p.product_name || p._legacy?.name || 'Product'
     const brand = titleCase(p.brand_id || '')
+    const img   = p._legacy?.img || ''
+    const summary = buildProductSummary(p)
+    const seg   = p.price_segment || 'mid-range'
+    const badge = SEG_BADGE[seg] || SEG_BADGE['mid-range']
+    const isTop3 = i < 3
 
-    return `<div style="border-bottom:1px solid #e8e8e8;padding:16px 0;display:flex;gap:16px;align-items:flex-start;">
-  <div style="background:#f0f0f0;border-radius:4px;width:56px;height:56px;flex:0 0 56px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#aaa;text-align:center;line-height:1.2;">[img]</div>
+    return `<div style="border:1px solid ${isTop3 ? 'rgba(230,126,34,0.3)' : '#2a2a2a'};border-radius:8px;padding:16px 20px;margin-bottom:12px;display:flex;gap:16px;align-items:flex-start;background:${isTop3 ? 'rgba(230,126,34,0.04)' : '#1a1a1a'};transition:border-color .15s;">
+  <div style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:700;color:${isTop3 ? '#e67e22' : '#5f5f5f'};flex:0 0 24px;padding-top:2px;">#${i+1}</div>
+  ${img ? `<img src="${img}" alt="${name}" loading="lazy" style="width:88px;height:88px;object-fit:contain;border-radius:6px;background:#141414;flex:0 0 88px;border:1px solid #2a2a2a;">` : `<div style="width:88px;height:88px;flex:0 0 88px;background:#141414;border:1px solid #2a2a2a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#5f5f5f;font-family:'JetBrains Mono',monospace;">IMG</div>`}
   <div style="flex:1;min-width:0;">
-    <p style="font-size:11px;color:#999;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 2px;">${brand}</p>
-    <h3 style="font-size:15px;font-weight:600;line-height:1.4;margin:0 0 10px;color:#111;">${i + 1}. ${name}</h3>
-    <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#e67e22;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">
+      <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">${brand}</span>
+      <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.06);color:${badge.color};border:1px solid ${badge.color}44;">${badge.label}</span>
+    </div>
+    <h3 style="font-size:15px;font-weight:600;line-height:1.4;margin:0 0 6px;color:#f0f0f0;">${name}</h3>
+    ${summary ? `<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#888;margin:0 0 10px;line-height:1.5;">${summary}</p>` : ''}
+    <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
   </div>
 </div>`
   }).join('\n')
@@ -161,34 +197,34 @@ function buildCategoryHubHTML(catSlug, products) {
     ]
   }
 
-  return `${buildPageStyles()}
+  return postShell(`${buildPageStyles()}
 
 ${asciDisclosure()}
 
-<p style="font-size:16px;line-height:1.7;color:#333;">${intro}</p>
+<p style="font-size:16px;line-height:1.7;color:#c8c8c8;">${intro}</p>
 
 ${methodologyBlock(`This page covers ${products.length} ${catLabel} models available on Amazon India.`)}
 
-<nav style="background:#f9f9f9;border:1px solid #e0e0e0;padding:10px 16px;border-radius:4px;margin-bottom:24px;font-size:13px;">
-<strong>Browse by brand:</strong> ${brands.slice(0, 10).map(b => `<span style="margin:0 6px;">${b}</span>`).join('·')}
+<nav style="background:#1a1a1a;border:1px solid #2a2a2a;padding:10px 16px;border-radius:4px;margin-bottom:24px;font-size:13px;font-family:'JetBrains Mono',ui-monospace,monospace;color:#888;">
+<span style="color:#e67e22;font-weight:700;">Browse by brand:</span> ${brands.slice(0, 10).map(b => `<span style="margin:0 6px;color:#c8c8c8;">${b}</span>`).join('<span style="color:#3a3a3a;">·</span>')}
 </nav>
 
-<h2 style="font-size:22px;font-weight:700;margin:24px 0 4px;">Top ${catLabel} in India ${YEAR}</h2>
-<p style="font-size:14px;color:#666;margin-bottom:16px;">Sorted by popularity on Amazon India. Click any product to check the latest price.</p>
+<h2 style="font-size:22px;font-weight:700;margin:24px 0 4px;color:#f0f0f0;letter-spacing:-0.02em;">Top ${catLabel} in India ${YEAR}</h2>
+<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#888;margin-bottom:16px;">Sorted by popularity on Amazon India. Click any product to check the latest price.</p>
 
 ${productRows}
 
-${factors.length ? `<h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;">What to look for when buying a ${catLabel}</h2>
-<ul style="font-size:15px;line-height:1.7;color:#333;">
+${factors.length ? `<h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;color:#f0f0f0;">What to look for when buying a ${catLabel}</h2>
+<ul style="font-size:15px;line-height:1.7;color:#c8c8c8;">
 ${factorItems}
 </ul>` : ''}
 
-<hr style="margin:32px 0;border:none;border-top:1px solid #e0e0e0;">
-<p style="font-size:12px;color:#999;line-height:1.6;">Prices on Amazon India change frequently. Click "Check price on Amazon" to see the current price. PriceHawk is not responsible for price changes after page publication.</p>
+<hr style="margin:32px 0;border:none;border-top:1px solid #2a2a2a;">
+<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#5f5f5f;line-height:1.6;">Prices on Amazon India change frequently. Click "Check price on Amazon" to see the current price. PriceHawk is not responsible for price changes after page publication.</p>
 
 <script type="application/ld+json">
 ${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
-</script>`
+</script>`)
 }
 
 // ── Brand Hub HTML ─────────────────────────────────────────────────────────────
@@ -198,12 +234,25 @@ function buildBrandPageHTML(brand, catSlug, brandProducts) {
   const sorted = sortByPopularity(brandProducts)
 
   const productRows = sorted.map((p, i) => {
-    const link = resolveOffer(p).affiliate_url || `https://www.amazon.in/dp/${resolveOffer(p).external_id}?tag=${TAG}`
-    const name = p.product_name || p._legacy?.name || 'Product'
+    const offer = resolveOffer(p)
+    const link  = offer.affiliate_url || `https://www.amazon.in/dp/${offer.external_id}?tag=${TAG}`
+    const name  = p.product_name || p._legacy?.name || 'Product'
+    const img   = p._legacy?.img || ''
+    const summary = buildProductSummary(p)
+    const seg   = p.price_segment || 'mid-range'
+    const badge = SEG_BADGE[seg] || SEG_BADGE['mid-range']
 
-    return `<div style="border-bottom:1px solid #e8e8e8;padding:14px 0;">
-  <h3 style="font-size:15px;font-weight:600;margin:0 0 8px;line-height:1.4;color:#111;">${i + 1}. ${name}</h3>
-  <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#e67e22;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
+    return `<div style="border:1px solid #2a2a2a;border-radius:8px;padding:16px 20px;margin-bottom:10px;display:flex;gap:16px;align-items:flex-start;background:#1a1a1a;">
+  ${img ? `<img src="${img}" alt="${name}" loading="lazy" style="width:80px;height:80px;object-fit:contain;border-radius:6px;background:#141414;flex:0 0 80px;border:1px solid #2a2a2a;">` : `<div style="width:80px;height:80px;flex:0 0 80px;background:#141414;border:1px solid #2a2a2a;border-radius:6px;"></div>`}
+  <div style="flex:1;min-width:0;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;color:#5f5f5f;">#${i+1}</span>
+      <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;color:${badge.color};border:1px solid ${badge.color}44;background:rgba(255,255,255,0.04);">${badge.label}</span>
+    </div>
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 6px;line-height:1.4;color:#f0f0f0;">${name}</h3>
+    ${summary ? `<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#888;margin:0 0 10px;">${summary}</p>` : ''}
+    <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
+  </div>
 </div>`
   }).join('\n')
 
@@ -223,24 +272,24 @@ function buildBrandPageHTML(brand, catSlug, brandProducts) {
     }
   }
 
-  return `${buildPageStyles()}
+  return postShell(`${buildPageStyles()}
 
 ${asciDisclosure()}
 
-<p style="font-size:16px;line-height:1.7;color:#333;">${brand} is one of the most widely reviewed ${catLabel} brands on Amazon India. Below is the complete ${brand} ${catLabel} range — updated regularly by PriceHawk.</p>
+<p style="font-size:16px;line-height:1.7;color:#c8c8c8;">${brand} is one of the most widely reviewed ${catLabel} brands on Amazon India. Below is the complete ${brand} ${catLabel} range — updated regularly by PriceHawk.</p>
 
 ${methodologyBlock(`This page covers ${sorted.length} ${brand} ${catLabel} models available on Amazon India.`)}
 
-<h2 style="font-size:22px;font-weight:700;margin:24px 0 12px;">${brand} ${catLabel} — All Models</h2>
+<h2 style="font-size:22px;font-weight:700;margin:24px 0 12px;color:#f0f0f0;letter-spacing:-0.02em;">${brand} ${catLabel} — All Models</h2>
 
 ${productRows}
 
-<hr style="margin:28px 0;border:none;border-top:1px solid #e0e0e0;">
-<p><a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← Back to Best ${catLabel} in India ${YEAR}</a></p>
+<hr style="margin:28px 0;border:none;border-top:1px solid #2a2a2a;">
+<p><a href="/best-${catSlug}/" style="color:#e67e22;font-weight:600;">← Back to Best ${catLabel} in India ${YEAR}</a></p>
 
 <script type="application/ld+json">
 ${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
-</script>`
+</script>`)
 }
 
 // ── MAIN ──────────────────────────────────────────────────────────────────────
