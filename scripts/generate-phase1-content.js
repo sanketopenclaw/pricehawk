@@ -108,16 +108,67 @@ function buildProductSummary(product) {
   const cap  = specs['Capacity'] || specs['Volume'] || specs['Bowl Capacity'] || ''
   const w    = specs['Output Wattage'] || specs['Wattage'] || ''
   const ctrl = specs['Control Method'] || specs['Controller Type'] || ''
-  const feats = specs._features || []
   const parts = []
   if (cap)  parts.push(cap.replace(/\s*lit(re|er)s?\b/i, 'L'))
   if (w)    parts.push(w.replace(/\s*Watts?\b/i, 'W'))
   if (ctrl && ctrl.length < 20) parts.push(ctrl + ' controls')
-  if (parts.length < 3 && feats.length) {
-    const hint = feats[0].replace(/^[^a-zA-Z]+/, '').split('.')[0].split(',')[0].trim()
-    if (hint.length < 70) parts.push(hint)
-  }
   return parts.slice(0, 3).join(' · ')
+}
+
+function buildProductProse(product) {
+  const feats = product.specifications?._features || []
+  for (const f of feats) {
+    const clean = f
+      .replace(/https?:\/\/\S+/g, '')
+      .replace(/\n[\s\S]*/m, '')
+      .replace(/^\s*[-•]\s*/, '')
+      .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}\u{2B00}-\u{2BFF}]/gu, '')
+      .trim()
+    if (clean.length >= 25 && clean.length <= 180) return clean
+  }
+  // Fallback: sentence from specs
+  const specs = product.specifications || {}
+  const cap   = specs['Capacity'] || specs['Volume'] || ''
+  const w     = specs['Output Wattage'] || specs['Wattage'] || ''
+  const parts = []
+  if (cap) parts.push(cap.replace(/\s*lit(re|er)s?\b/i, 'L') + ' capacity')
+  if (w)   parts.push(w.replace(/\s*Watts?\b/i, 'W'))
+  return parts.length ? parts.join(', ') + '.' : ''
+}
+
+function buildStarRating(rating, reviewCount) {
+  const r = parseFloat(rating)
+  if (!r || isNaN(r)) return ''
+  let stars = ''
+  for (let i = 1; i <= 5; i++) {
+    const fill = r >= i - 0.25 ? '#e67e22' : r >= i - 0.75 ? null : '#2a2a2a'
+    if (fill) {
+      stars += `<span style="color:${fill};">★</span>`
+    } else {
+      stars += `<span style="color:#e67e22;opacity:0.45;">★</span>`
+    }
+  }
+  const cnt = parseInt(String(reviewCount || '0').replace(/[^0-9]/g, '')) || 0
+  const cntStr = cnt > 0
+    ? ` <span style="color:#666;font-size:11px;">(${cnt >= 1000 ? (cnt/1000).toFixed(1)+'k' : cnt} reviews)</span>`
+    : ''
+  return `<div style="margin:3px 0 7px;line-height:1;">${stars} <span style="color:#c8c8c8;font-size:12px;">${r.toFixed(1)}</span>${cntStr}</div>`
+}
+
+function cleanProductName(name, maxLen = 82) {
+  const s = (name || '').trim()
+  if (s.length <= maxLen) return s
+  const cut = s.slice(0, maxLen)
+  const lastSpace = cut.lastIndexOf(' ')
+  return (lastSpace > maxLen * 0.7 ? cut.slice(0, lastSpace) : cut) + '…'
+}
+
+const CAT_SINGULAR = {
+  'Air Fryers': 'Air Fryer', 'Mixer Grinders': 'Mixer Grinder',
+  'Coffee Machines': 'Coffee Machine', 'Induction Cooktops': 'Induction Cooktop',
+  'Electric Kettles': 'Electric Kettle', 'Food Processors': 'Food Processor',
+  'Hand Blenders': 'Hand Blender', 'Sandwich Makers': 'Sandwich Maker',
+  'Rice Cookers': 'Rice Cooker',
 }
 
 const SEG_BADGE = {
@@ -135,31 +186,36 @@ function buildCategoryHubHTML(catSlug, products) {
   const factors = CAT_BUYING_FACTORS[catSlug] || []
   const sorted = sortByPopularity(products).slice(0, 20)
 
-  const brands = [...new Set(
-    sorted.map(p => p.brand_id).filter(Boolean).map(b => titleCase(b))
-  )]
+  // Keep slug+label pairs for brand page links
+  const brandEntries = [...new Map(
+    sorted.map(p => p.brand_id).filter(Boolean).map(b => [b, titleCase(b)])
+  ).entries()]
 
   const productRows = sorted.map((p, i) => {
-    const offer = resolveOffer(p)
-    const link  = offer.affiliate_url || `https://www.amazon.in/dp/${offer.external_id}?tag=${TAG}`
-    const name  = p.product_name || p._legacy?.name || 'Product'
-    const brand = titleCase(p.brand_id || '')
-    const img   = p._legacy?.img || ''
-    const summary = buildProductSummary(p)
-    const seg   = p.price_segment || 'mid-range'
-    const badge = SEG_BADGE[seg] || SEG_BADGE['mid-range']
-    const isTop3 = i < 3
+    const offer    = resolveOffer(p)
+    const link     = offer.affiliate_url || `https://www.amazon.in/dp/${offer.external_id}?tag=${TAG}`
+    const name     = cleanProductName(p.product_name || p._legacy?.name || 'Product')
+    const brand    = titleCase(p.brand_id || '')
+    const imgSrc   = p.wp_image_url || p._legacy?.img || ''
+    const specLine = buildProductSummary(p)
+    const prose    = buildProductProse(p)
+    const starHtml = buildStarRating(p._legacy?.rating, p._legacy?.review_count)
+    const seg      = p.price_segment || 'mid-range'
+    const badge    = SEG_BADGE[seg] || SEG_BADGE['mid-range']
+    const isTop3   = i < 3
 
-    return `<div style="border:1px solid ${isTop3 ? 'rgba(230,126,34,0.3)' : '#2a2a2a'};border-radius:8px;padding:16px 20px;margin-bottom:12px;display:flex;gap:16px;align-items:flex-start;background:${isTop3 ? 'rgba(230,126,34,0.04)' : '#1a1a1a'};transition:border-color .15s;">
+    return `<div style="border:1px solid ${isTop3 ? 'rgba(230,126,34,0.3)' : '#2a2a2a'};border-radius:8px;padding:16px 20px;margin-bottom:12px;display:flex;gap:16px;align-items:flex-start;background:${isTop3 ? 'rgba(230,126,34,0.04)' : '#1a1a1a'};">
   <div style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:700;color:${isTop3 ? '#e67e22' : '#5f5f5f'};flex:0 0 24px;padding-top:2px;">#${i+1}</div>
-  ${img ? `<img src="${img}" alt="${name}" loading="lazy" style="width:88px;height:88px;object-fit:contain;border-radius:6px;background:#141414;flex:0 0 88px;border:1px solid #2a2a2a;">` : `<div style="width:88px;height:88px;flex:0 0 88px;background:#141414;border:1px solid #2a2a2a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#5f5f5f;font-family:'JetBrains Mono',monospace;">IMG</div>`}
+  ${imgSrc ? `<img src="${imgSrc}" alt="${name}" loading="lazy" style="width:88px;height:88px;object-fit:contain;border-radius:6px;background:#141414;flex:0 0 88px;border:1px solid #2a2a2a;">` : `<div style="width:88px;height:88px;flex:0 0 88px;background:#141414;border:1px solid #2a2a2a;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#5f5f5f;font-family:'JetBrains Mono',monospace;">IMG</div>`}
   <div style="flex:1;min-width:0;">
-    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
       <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;">${brand}</span>
       <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(255,255,255,0.06);color:${badge.color};border:1px solid ${badge.color}44;">${badge.label}</span>
     </div>
-    <h3 style="font-size:15px;font-weight:600;line-height:1.4;margin:0 0 6px;color:#f0f0f0;">${name}</h3>
-    ${summary ? `<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#888;margin:0 0 10px;line-height:1.5;">${summary}</p>` : ''}
+    <h3 style="font-size:15px;font-weight:600;line-height:1.4;margin:0 0 2px;color:#f0f0f0;">${name}</h3>
+    ${starHtml}
+    ${specLine ? `<p style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#5f5f5f;margin:0 0 5px;line-height:1.4;">${specLine}</p>` : ''}
+    ${prose ? `<p style="font-size:13px;color:#a0a0a0;margin:0 0 10px;line-height:1.55;">${prose}</p>` : ''}
     <a href="${link}" target="_blank" rel="nofollow sponsored noopener" style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:7px 16px;border-radius:4px;">Check price on Amazon →</a>
   </div>
 </div>`
@@ -206,7 +262,7 @@ ${asciDisclosure()}
 ${methodologyBlock(`This page covers ${products.length} ${catLabel} models available on Amazon India.`)}
 
 <nav style="background:#1a1a1a;border:1px solid #2a2a2a;padding:10px 16px;border-radius:4px;margin-bottom:24px;font-size:13px;font-family:'JetBrains Mono',ui-monospace,monospace;color:#888;">
-<span style="color:#e67e22;font-weight:700;">Browse by brand:</span> ${brands.slice(0, 10).map(b => `<span style="margin:0 6px;color:#c8c8c8;">${b}</span>`).join('<span style="color:#3a3a3a;">·</span>')}
+<span style="color:#e67e22;font-weight:700;">Browse by brand:</span> ${brandEntries.slice(0, 10).map(([slug, label]) => `<a href="/${catSlug}-${slug}/" style="margin:0 6px;color:#c8c8c8;text-decoration:none;border-bottom:1px solid #3a3a3a;">${label}</a>`).join('<span style="color:#3a3a3a;">·</span>')}
 </nav>
 
 <h2 style="font-size:22px;font-weight:700;margin:24px 0 4px;color:#f0f0f0;letter-spacing:-0.02em;">Top ${catLabel} in India ${YEAR}</h2>
@@ -214,7 +270,7 @@ ${methodologyBlock(`This page covers ${products.length} ${catLabel} models avail
 
 ${productRows}
 
-${factors.length ? `<h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;color:#f0f0f0;">What to look for when buying a ${catLabel}</h2>
+${factors.length ? `<h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;color:#f0f0f0;">What to look for when buying ${CAT_SINGULAR[catLabel] ? 'an' : 'a'} ${CAT_SINGULAR[catLabel] || catLabel}</h2>
 <ul style="font-size:15px;line-height:1.7;color:#c8c8c8;">
 ${factorItems}
 </ul>` : ''}
@@ -311,7 +367,9 @@ async function main() {
     if (!fs.existsSync(file)) { console.log(`\n[${catSlug}] skip — no data file`); continue }
 
     const data = JSON.parse(fs.readFileSync(file, 'utf8'))
-    const products = (data.products || []).filter(p => p.product_id) // migrated only
+    const products = (data.products || [])
+      .filter(p => p.product_id && p.status === 'active')
+      .filter(p => !/\bchopper\b/i.test(p.product_name || p._legacy?.name || ''))
     if (!products.length) { console.log(`\n[${catSlug}] skip — 0 migrated products`); continue }
 
     const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
