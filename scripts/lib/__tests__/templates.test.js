@@ -1,7 +1,10 @@
 // scripts/lib/__tests__/templates.test.js
 const { test } = require('node:test')
 const assert = require('node:assert/strict')
-const { prosConsFromSpecs, verdictBox, updatedLine } = require('../templates')
+const {
+  prosConsFromSpecs, verdictBox, updatedLine,
+  wideShell, specScorecard, howItStacksUp, tocBlock,
+} = require('../templates')
 const { voiceLint } = require('../voice')
 
 function mkProduct(specs, features = [], seg = 'mid-range') {
@@ -86,6 +89,72 @@ test('verdictBox names product, hedges, includes CTA, lint-clean', () => {
 test('verdictBox deterministic per seed', () => {
   const args = { name: 'X', catLabel: 'Kettle', seg: 'budget', whoFor: '1–2 people', keyStrength: 'a lower price', link: 'https://a.in', seed: 's' }
   assert.strictEqual(verdictBox(args), verdictBox(args))
+})
+
+// --- wideShell ---
+
+test('wideShell breaks out of theme column and centers wide content', () => {
+  const html = wideShell('<p>INNER</p>')
+  assert.ok(html.includes('INNER'))
+  assert.ok(html.includes('100vw'))
+  assert.ok(/calc\(50% - 50vw\)/.test(html))
+  assert.ok(/max-width:\s*1\d{3}px/.test(html))
+})
+
+// --- specScorecard ---
+
+function pricedProduct(specs, features, price, seg = 'mid-range') {
+  return {
+    specifications: { ...specs, _features: features },
+    price_segment: seg,
+    offers: [{ last_price: price }],
+  }
+}
+
+const PRICED_CATEGORY = [
+  pricedProduct({ 'Output Wattage': '1200 Watts', 'Capacity': '4 litres' }, ['Auto shut-off'], 3500),
+  pricedProduct({ 'Output Wattage': '1400 Watts', 'Capacity': '4.5 litres' }, ['Auto shut-off', 'Keep warm'], 5500),
+  pricedProduct({ 'Output Wattage': '2000 Watts', 'Capacity': '6.2 litres' }, ['Auto shut-off', 'Keep warm', 'Timer'], 9000),
+]
+
+test('specScorecard renders normalized bars with honesty caption', () => {
+  const html = specScorecard(PRICED_CATEGORY[2], PRICED_CATEGORY, 'Air Fryer')
+  assert.ok(html.includes('10.0') || html.includes('10/10') || /width:\s*100%/.test(html), 'top product should max a bar')
+  assert.ok(/documented specifications/i.test(html))
+  assert.ok(/not lab/i.test(html))
+  assert.deepEqual(voiceLint(html), [])
+})
+
+test('specScorecard returns empty string when nothing scorable', () => {
+  const bare = { specifications: {}, offers: [{}] }
+  assert.strictEqual(specScorecard(bare, [bare], 'Air Fryer'), '')
+})
+
+// --- howItStacksUp ---
+
+test('howItStacksUp names cheaper and pricier rivals with spec deltas', () => {
+  const mid = PRICED_CATEGORY[1]
+  mid.product_name = 'Mid Fryer 4.5L'
+  PRICED_CATEGORY[0].product_name = 'Cheap Fryer 4L'
+  PRICED_CATEGORY[2].product_name = 'Big Fryer 6.2L'
+  const html = howItStacksUp(mid, PRICED_CATEGORY, 'Air Fryer')
+  assert.ok(html.includes('Cheap Fryer'))
+  assert.ok(html.includes('Big Fryer'))
+  assert.deepEqual(voiceLint(html), [])
+})
+
+test('howItStacksUp returns empty string with no priced rivals', () => {
+  const solo = pricedProduct({ 'Output Wattage': '1400 Watts' }, [], 5000)
+  assert.strictEqual(howItStacksUp(solo, [solo], 'Air Fryer'), '')
+})
+
+// --- tocBlock ---
+
+test('tocBlock renders anchor links', () => {
+  const html = tocBlock([{ id: 'specs', label: 'Specifications' }, { id: 'verdict', label: 'Verdict' }])
+  assert.ok(html.includes('href="#specs"'))
+  assert.ok(html.includes('Specifications'))
+  assert.ok(html.includes('href="#verdict"'))
 })
 
 // --- updatedLine ---

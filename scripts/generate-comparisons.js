@@ -11,6 +11,7 @@ const {
 } = require('./lib/content')
 const { comparisonSchema, slugify } = require('./lib/schema')
 const { tradeoffVerdict, voiceLint } = require('./lib/voice')
+const { wideShell } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -161,7 +162,7 @@ function buildComparisonHTML(p1, p2, catSlug, slugIndex = {}) {
 
   const methodCtx = `This comparison is based on published specifications for the ${short1} and ${short2}, competitive positioning within each product's price segment, and aggregated user experience from public reviews.`
 
-  return `${asciDisclosure()}
+  return wideShell(`${asciDisclosure()}
 
 <nav style="font-size:13px;color:#888;margin-bottom:20px;">
 <a href="/" style="color:#666;">Home</a> › <a href="/best-${catSlug}/" style="color:#666;">Best ${catLabel}s in India ${YEAR}</a> › Comparison
@@ -261,7 +262,7 @@ ${relatedLinks(asin1, catSlug, slugIndex, catLabel)}
 
 <script type="application/ld+json">
 ${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
-</script>`
+</script>`)
 }
 
 async function main() {

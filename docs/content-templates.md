@@ -1,8 +1,23 @@
-# PriceHawk Content Templates v1
+# PriceHawk Content Templates v2
 
 Research-backed page anatomies for the three core content types. Sources: Google's
 "Write high quality reviews" guidance (developers.google.com, updated 2025-12),
 Wirecutter page anatomy (verdict-first, flaws-not-dealbreakers), Sanket DNA voice file.
+
+v2 additions (from RTINGS, Serious Eats, geekman.in, everythingbetter.in, glenindia,
+herfavfood reference study, 2026-06-12):
+- **Wide layout** — all generated posts break out of the theme column via `wideShell()`
+  (100vw breakout, 1200px inner max) — RTINGS/Wirecutter are wide, narrow looks bloggy
+- **Jump-link TOC** (RTINGS) — `tocBlock()` under the verdict
+- **Spec scorecard** (RTINGS scorecards, honest version) — `specScorecard()`: Power /
+  Capacity / Features / Price-position bars normalized vs tracked category; caption
+  states "documented specifications — not lab tests"
+- **How It Stacks Up** (RTINGS chained pick comparisons) — `howItStacksUp()`: nearest
+  cheaper + nearest pricier rival with wattage/capacity deltas
+- **Persona-fit framing** (Indian roundups: geekman/everythingbetter/glen) — capacity ↔
+  family size mapping already drives whoFor in the verdict box; guides should map
+  3.5L≈small / 5L≈medium / 6L+≈large household
+- Side-by-side hero: product card + scorecard share a row on desktop (wide layout)
 
 Hard rules that override everything: master doc v2.3 compliance (no scraped Amazon
 price/image/rating display, ASCI disclosure above fold, methodology block, draft-only).

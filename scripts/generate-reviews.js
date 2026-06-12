@@ -12,7 +12,10 @@ const {
 } = require('./lib/content')
 const { reviewSchema, slugify } = require('./lib/schema')
 const { reviewIntroLead, trackingSinceNote, cantTellYouBlock, voiceLint } = require('./lib/voice')
-const { prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock } = require('./lib/templates')
+const {
+  prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock,
+  wideShell, specScorecard, howItStacksUp, tocBlock,
+} = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -202,13 +205,23 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
     const raw = name.replace(/\s*[\\|,(].*$/, '').trim()
     return raw.length > 55 ? raw.substring(0, 52).replace(/\s+\S*$/, '') + '…' : raw
   })()
-  const verdictHTML = verdictBox({ name: verdictName, catLabel, seg, whoFor, keyStrength, link, seed: asin })
+  const verdictHTML  = verdictBox({ name: verdictName, catLabel, seg, whoFor, keyStrength, link, seed: asin })
+  const scorecardHTML = specScorecard(product, categoryProducts, catLabel)
+  const stacksUpHTML  = howItStacksUp(product, categoryProducts, catLabel)
+  const tocHTML = tocBlock([
+    scorecardHTML && { id: 'scorecard', label: 'Spec Score' },
+    (pros.length || cons.length) && { id: 'pros-cons', label: 'Good & Not-So-Good' },
+    { id: 'specs', label: 'Specifications' },
+    stacksUpHTML && { id: 'stacks-up', label: 'vs Rivals' },
+    { id: 'who-for', label: 'Who Should Buy' },
+    faqs.length && { id: 'faq', label: 'FAQ' },
+  ].filter(Boolean))
 
   const schema = reviewSchema({ name, brand, catLabel, catSlug, link, faqs, asinSlug })
 
   const methodCtx = `This assessment is based on published specifications for the ${name}, aggregated user feedback, competitive positioning against comparable models, and PriceHawk's tracked price history.`
 
-  return `${asciDisclosure()}
+  return wideShell(`${asciDisclosure()}
 
 <nav style="font-size:13px;color:#888;margin-bottom:20px;">
 <a href="/" style="color:#666;">Home</a> › <a href="/best-${catSlug}/" style="color:#666;">Best ${catLabel}s in India ${YEAR}</a> › ${name.substring(0, 50)}… Review
@@ -216,10 +229,12 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
 
 ${verdictHTML}
 ${updatedLine()}
+${tocHTML}
 
 <p style="font-size:16px;line-height:1.7;color:#333;">${introLead} ${intro}</p>
 
-<div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;margin:20px 0;">
+<div style="display:flex;gap:20px;flex-wrap:wrap;margin:20px 0;align-items:stretch;">
+<div style="flex:1.2;min-width:300px;background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;">
   <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">${brand}</p>
   <h2 style="font-size:17px;font-weight:700;margin:0 0 12px;line-height:1.4;">${name}</h2>
   ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 10px;">Price trend (${YEAR}) ${sparkline}</p>` : ''}
@@ -229,15 +244,19 @@ ${updatedLine()}
     Check price on Amazon →
   </a>
 </div>
+${scorecardHTML ? `<div style="flex:1;min-width:300px;">${scorecardHTML.replace('margin:24px 0;', 'margin:0;')}</div>` : ''}
+</div>
 
 ${prosConsBlock(pros, cons)}
 
-<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;">Full Specifications</h2>
+<h2 id="specs" style="font-size:20px;font-weight:700;margin:28px 0 10px;">Full Specifications</h2>
 ${specsHTML || '<p style="color:#666;font-size:14px;">Refer to the Amazon product page for full specifications.</p>'}
+
+${stacksUpHTML}
 
 ${featuresHTML ? `<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;">What Makes This Stand Out</h2>\n${featuresHTML}` : ''}
 
-<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;">Who Should Buy This?</h2>
+<h2 id="who-for" style="font-size:20px;font-weight:700;margin:28px 0 10px;">Who Should Buy This?</h2>
 ${whoHTML}
 
 ${cantTellYouBlock(catLabel)}
@@ -263,7 +282,7 @@ ${methodologyBlock(methodCtx)}
   <p style="margin:10px 0 0;font-size:12px;color:#999;">Amazon prices change frequently. Click to see the current price.</p>
 </div>
 
-${faqs.length ? `<h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;">Frequently Asked Questions</h2>
+${faqs.length ? `<h2 id="faq" style="font-size:20px;font-weight:700;margin:32px 0 12px;">Frequently Asked Questions</h2>
 ${faqs.map(([q, a]) => `<details style="border:1px solid #e0e0e0;border-radius:4px;margin-bottom:8px;">
   <summary style="padding:12px 16px;cursor:pointer;font-weight:600;font-size:14px;background:#fafafa;">${q}</summary>
   <div style="padding:12px 16px;font-size:14px;line-height:1.7;color:#333;">${a}</div>
@@ -278,7 +297,7 @@ ${relatedLinks(asin, catSlug, slugIndex, catLabel)}
 
 <script type="application/ld+json">
 ${JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')}
-</script>`
+</script>`)
 }
 
 async function main() {

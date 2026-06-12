@@ -10,6 +10,7 @@ const {
 } = require('./lib/content')
 const { guideSchema, slugify } = require('./lib/schema')
 const { guideOpener, voiceLint } = require('./lib/voice')
+const { wideShell } = require('./lib/templates')
 const {
   classifyPicks,
   buildPageStyles,
@@ -196,7 +197,7 @@ function buildGuideHTML(products, catSlug, subtype, useCase) {
   const schema = guideSchema({ catLabel, catSlug, slug: guideSlug, products: productList })
   const schemaJSON = JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
 
-  return `${buildPageStyles()}
+  return wideShell(`${buildPageStyles()}
 
 ${asciDisclosure()}
 
@@ -231,7 +232,7 @@ ${s10}
 
 <script type="application/ld+json">
 ${schemaJSON}
-</script>`
+</script>`)
 }
 
 async function main() {
