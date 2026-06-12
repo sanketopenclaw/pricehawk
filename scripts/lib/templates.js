@@ -223,7 +223,67 @@ function tocBlock(entries) {
 </nav>`
 }
 
+// Full site shell for generated posts — matches the homepage design system
+// (public/site/shared.jsx PHHeader/PHFooter + ph-home chrome-hiding CSS).
+// Dark site frame, static header/nav/footer, light 1200px reading card for the article.
+function postShell(articleHtml) {
+  const LOGO = 'https://pricehawk.in/wp-content/uploads/2026/06/pricehawk-logo.png'
+  const NAV = [['Guides', '/buying-guide/'], ['Compare', '/comparison/'], ['Deals', '/deals/'], ['Price Drops', '/price-drops/'], ['Categories', '/categories/']]
+  return `<!-- wp:html {"align":"full"} -->
+<style>
+body{background:#0f0f0f!important}
+.site-header,.site-footer,header.site-header,footer.site-footer,
+#masthead,#colophon,.wp-block-template-part,.navigation,.post-navigation,
+.entry-header,.entry-footer,.comments-area,.sidebar,#secondary,
+.wp-block-post-title,.wp-block-post-featured-image,.wp-block-post-author,
+.wp-block-post-date,.wp-block-post-terms,.wp-block-comments{display:none!important}
+.entry-content,.wp-block-post-content,.site-content,#content,.page-content,
+.hentry,.wp-site-blocks{max-width:100%!important;margin:0!important;padding:0!important;background:#0f0f0f!important}
+main.wp-block-group,main.wp-block-group-is-layout-constrained{margin-top:0!important;padding-top:0!important}
+.wp-block-group.has-global-padding,.wp-block-group.is-layout-constrained{padding-top:0!important;margin-top:0!important}
+.wp-block-html,.wp-block-html.alignfull{max-width:100%!important;width:100%!important}
+.entry-content.has-global-padding>*,.is-layout-constrained>*,.entry-content>*{max-width:none!important}
+.has-global-padding>*{max-width:none!important;--wp--style--global--content-size:100%!important;--wp--style--global--wide-size:100%!important}
+.ph-post-hdr a:hover{color:#e67e22!important}
+@media (max-width:768px){.ph-post-nav{display:none!important}.ph-post-article{padding:20px 16px!important;border-radius:0!important}}
+</style>
+<div style="background:#0f0f0f;min-height:100vh;font-family:'Inter',system-ui,sans-serif;">
+<header class="ph-post-hdr" style="position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:32px;padding:14px 40px;border-bottom:1px solid #2a2a2a;background:rgba(15,15,15,0.92);backdrop-filter:blur(10px);">
+  <a href="/"><img src="${LOGO}" alt="PriceHawk" style="height:30px;width:auto;display:block;"></a>
+  <nav class="ph-post-nav" style="display:flex;gap:22px;font-size:13px;font-weight:500;font-family:'JetBrains Mono',ui-monospace,monospace;">
+    ${NAV.map(([label, href]) => `<a href="${href}" style="color:#888;text-decoration:none;">${label}</a>`).join('\n    ')}
+  </nav>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+    <a href="/price-drops/" style="padding:8px 14px;font-size:13px;border-radius:6px;border:1px solid rgba(230,126,34,0.55);color:#e67e22;text-decoration:none;font-weight:600;">Alerts</a>
+  </div>
+</header>
+<div style="max-width:1200px;margin:28px auto 0;padding:0 20px;box-sizing:border-box;">
+<article class="ph-post-article" style="background:#ffffff;border-radius:12px;padding:36px 44px;box-sizing:border-box;color:#333;">
+${articleHtml}
+</article>
+</div>
+<footer style="border-top:1px solid #2a2a2a;padding:32px 40px;margin-top:48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;">
+  <div style="display:flex;align-items:center;gap:18px;">
+    <a href="/"><img src="${LOGO}" alt="PriceHawk" style="height:24px;width:auto;display:block;"></a>
+    <span style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:#5f5f5f;">Find the Best Price. Every Time.</span>
+  </div>
+  <div style="display:flex;gap:22px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;">
+    <a href="/about/" style="color:#888;text-decoration:none;">About</a>
+    <a href="/editorial-policy/" style="color:#888;text-decoration:none;">Editorial Policy</a>
+    <a href="/privacy-policy/" style="color:#888;text-decoration:none;">Privacy</a>
+    <a href="/terms-of-service/" style="color:#888;text-decoration:none;">Terms</a>
+    <a href="/affiliate-disclosure/" style="color:#888;text-decoration:none;">Disclosure</a>
+    <a href="/contact/" style="color:#888;text-decoration:none;">Contact</a>
+  </div>
+  <div style="font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;color:#5f5f5f;flex-basis:100%;">
+    PriceHawk earns a commission on purchases. This never affects our editorial recommendations.
+  </div>
+</footer>
+</div>
+<!-- /wp:html -->`
+}
+
 module.exports = {
   prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock, median,
-  wideShell, specScorecard, howItStacksUp, tocBlock,
+  wideShell, specScorecard, howItStacksUp, tocBlock, postShell,
 }

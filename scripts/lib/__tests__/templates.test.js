@@ -3,7 +3,7 @@ const { test } = require('node:test')
 const assert = require('node:assert/strict')
 const {
   prosConsFromSpecs, verdictBox, updatedLine,
-  wideShell, specScorecard, howItStacksUp, tocBlock,
+  wideShell, specScorecard, howItStacksUp, tocBlock, postShell,
 } = require('../templates')
 const { voiceLint } = require('../voice')
 
@@ -99,6 +99,26 @@ test('wideShell breaks out of theme column and centers wide content', () => {
   assert.ok(html.includes('100vw'))
   assert.ok(/calc\(50% - 50vw\)/.test(html))
   assert.ok(/max-width:\s*1\d{3}px/.test(html))
+})
+
+// --- postShell ---
+
+test('postShell hides theme chrome and renders site header, nav, footer, light article card', () => {
+  const html = postShell('<p>ARTICLE</p>')
+  assert.ok(html.includes('ARTICLE'))
+  // theme chrome hidden (same approach as ph-home page)
+  assert.ok(/\.wp-block-template-part[^{]*\{[^}]*display:\s*none/s.test(html))
+  assert.ok(/\.wp-block-post-title[^}]*display:\s*none/s.test(html) || /\.wp-block-post-title/.test(html))
+  // site header replica
+  assert.ok(html.includes('pricehawk-logo.png'))
+  assert.ok(html.includes('/buying-guide/'))
+  assert.ok(html.includes('/price-drops/'))
+  assert.ok(html.includes('/categories/'))
+  // dark shell + wide light article surface
+  assert.ok(html.includes('#0f0f0f'))
+  assert.ok(/max-width:\s*1200px/.test(html))
+  // footer replica with disclosure line
+  assert.ok(/earns a commission on purchases/.test(html))
 })
 
 // --- specScorecard ---

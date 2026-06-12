@@ -11,7 +11,7 @@ const {
 } = require('./lib/content')
 const { comparisonSchema, slugify } = require('./lib/schema')
 const { tradeoffVerdict, voiceLint } = require('./lib/voice')
-const { wideShell } = require('./lib/templates')
+const { postShell } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -162,11 +162,13 @@ function buildComparisonHTML(p1, p2, catSlug, slugIndex = {}) {
 
   const methodCtx = `This comparison is based on published specifications for the ${short1} and ${short2}, competitive positioning within each product's price segment, and aggregated user experience from public reviews.`
 
-  return wideShell(`${asciDisclosure()}
+  return postShell(`${asciDisclosure()}
 
 <nav style="font-size:13px;color:#888;margin-bottom:20px;">
 <a href="/" style="color:#666;">Home</a> › <a href="/best-${catSlug}/" style="color:#666;">Best ${catLabel}s in India ${YEAR}</a> › Comparison
 </nav>
+
+<h1 style="font-size:28px;font-weight:800;line-height:1.25;margin:0 0 18px;color:#1a1a1a;">${short1} vs ${short2}: Which ${catLabel} Should You Buy? (${YEAR})</h1>
 
 <p style="font-size:16px;line-height:1.7;color:#333;">
 Choosing between the <strong>${short1}</strong> and the <strong>${short2}</strong>?

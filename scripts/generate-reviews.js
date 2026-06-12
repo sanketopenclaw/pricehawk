@@ -14,7 +14,7 @@ const { reviewSchema, slugify } = require('./lib/schema')
 const { reviewIntroLead, trackingSinceNote, cantTellYouBlock, voiceLint } = require('./lib/voice')
 const {
   prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock,
-  wideShell, specScorecard, howItStacksUp, tocBlock,
+  postShell, specScorecard, howItStacksUp, tocBlock,
 } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
@@ -221,11 +221,13 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
 
   const methodCtx = `This assessment is based on published specifications for the ${name}, aggregated user feedback, competitive positioning against comparable models, and PriceHawk's tracked price history.`
 
-  return wideShell(`${asciDisclosure()}
+  return postShell(`${asciDisclosure()}
 
 <nav style="font-size:13px;color:#888;margin-bottom:20px;">
 <a href="/" style="color:#666;">Home</a> › <a href="/best-${catSlug}/" style="color:#666;">Best ${catLabel}s in India ${YEAR}</a> › ${name.substring(0, 50)}… Review
 </nav>
+
+<h1 style="font-size:28px;font-weight:800;line-height:1.25;margin:0 0 18px;color:#1a1a1a;">${verdictName} Review — Worth Buying in India ${YEAR}?</h1>
 
 ${verdictHTML}
 ${updatedLine()}
