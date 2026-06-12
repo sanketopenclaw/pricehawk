@@ -39,11 +39,11 @@ Aesthetic in one line: **dark, trustworthy-analyst terminal — WireCutter × 91
 **Text on accent fills:** dark, not white — `#140a02` on `--accent` buttons/pills, `#04210f` on solid green badges.
 
 ### Article reading surface (posts only)
-Long-form post body sits in a **white article card on the dark shell**:
-- Article card: `background:#ffffff`, `border-radius:12px`, `padding:36px 44px`
-- Body text on white: `#333` (primary), `#444` (secondary), `#888` (meta), `#1a1a1a` (headings)
-- Light borders on white: `#e8e8e8`; light panel fill: `#fafafa`
-- Verdict/highlight box: `background:#fffbf2`, accent-left-border — use `--accent` `#e67e22` for the left border and label color
+Generated posts use **dark theme throughout** — no white article card:
+- Article bg: `transparent` (inherits `#0f0f0f` from shell)
+- Body text: `#c8c8c8` (prose), `#f0f0f0` (headings), `#a0a0a0` (secondary)
+- Cards/panels: `#1a1a1a` bg, `1px solid #2a2a2a` border
+- Verdict/highlight box: `rgba(230,126,34,0.07)` bg, `rgba(230,126,34,0.28)` left border
 
 ### Banned / off-brand colors
 Never use: `#ff9900` (raw Amazon orange), `#e8a020`, `#e65100`, `#b07b10`, generic bootstrap blues/greens. CTA buttons = `--accent` `#e67e22` with `#140a02` text. Links on white = `#e67e22`.
@@ -93,11 +93,11 @@ Base: `border-radius:8px`, `padding:11px 18px`, 14px/600, `:active { translateY(
 
 ## 5. Page shell (every generated page/post)
 
-**Widescreen, always.** No max-width cap on page wrappers — `max-width:none`, full viewport width with `padding: 0 40px` desktop / `16px` mobile (matches homepage). Never reintroduce 760px/1200px reading columns.
+**Centered wide — `max-width:1440px; margin:0 auto; padding:0 40px`** desktop / `padding:0 16px` mobile. Never reintroduce 760px/1200px narrow columns. Never go fully `max-width:none` (too wide on large monitors).
 
 1. Force dark body + hide theme chrome: `body{background:#0f0f0f!important}` + hide `.site-header/.site-footer/.wp-block-post-title` etc.
-2. PriceHawk header: wordmark + mono nav links (`#888`, 13px JetBrains Mono) + Alerts button (outline-accent)
-3. Content: dark UI sections, or white article card for long-form prose
+2. PriceHawk sticky header: wordmark (30px logo) + mono nav links (`#888`, 13px JetBrains Mono) + Alerts button (outline-accent). `backdrop-filter:blur(10px)`, `background:rgba(15,15,15,0.92)`
+3. Content: all dark — no white reading card
 4. Footer: mono 12px links `#888`, tagline "Find the Best Price. Every Time." in `#5f5f5f` mono, commission disclosure line in mono `--text-3`
 5. ASCI/affiliate disclosure above fold (compliance — see project memory)
 
@@ -110,6 +110,60 @@ Base: `border-radius:8px`, `padding:11px 18px`, 14px/600, `:active { translateY(
 
 ---
 
+## 7. Review Page Components
+
+### Star distribution bars
+```
+5 bars (5→1★). Track: #2a2a2a. Fill: #e67e22 if pct≥50, else #5f5f5f. Height 6px. Width = pct%.
+Labels: mono 11px #888. Percentage: mono 11px #5f5f5f.
+```
+
+### Sentiment chip
+```
+bg: rgba(39,174,96,0.15)  color: #4ade80  border: rgba(39,174,96,0.3)
+font: mono 11px 700  padding: 3px 8px  radius: 4px
+Label: "Sentiment {score}/10"
+```
+
+### Review cards (positive / critical)
+```
+Positive: bg rgba(39,174,96,0.06)  border rgba(39,174,96,0.2)  label #4ade80
+Critical:  bg rgba(231,76,60,0.06)  border rgba(231,76,60,0.2)  label #f87171
+Text: #c8c8c8 13.5px. Stars: #e67e22. Meta (reviewer·date): mono 10px #5f5f5f.
+```
+
+### Segment badges (hub + review pages)
+```
+Budget:    color #27ae60  bg rgba(39,174,96,0.10)   border #27ae6044
+Mid-Range: color #e67e22  bg rgba(230,126,34,0.10)  border #e67e2244
+Premium:   color #3498db  bg rgba(52,152,219,0.10)  border #3498db44
+Flagship:  color #9b59b6  bg rgba(155,89,182,0.10)  border #9b59b644
+Font: mono 10px 700. Padding: 2px 7px. Radius: 4px.
+```
+
+### Scenario cards (In Your Kitchen)
+```
+bg #1a1a1a  border #2a2a2a  radius 6px  padding 16px 18px
+Heading: #f0f0f0 15px 700. Body: #a0a0a0 14px line-height 1.7.
+```
+
+### Key Specs table
+```
+bg #1a1a1a  border #2a2a2a  overflow hidden (for radius on table)
+Col 1 (label): mono 12px 700 #888. Col 2 (value): mono 13px 700 #e67e22. Col 3 (explain): 13.5px #c8c8c8.
+Row separator: border-bottom 1px solid #2a2a2a.
+```
+
+### Product gallery
+```
+Horizontal scroll div. gap 10px. scrollbar-color: #2a2a2a #0f0f0f.
+Tiles: 160×160, bg #141414, border #2a2a2a, radius 6px. Image: object-fit:contain, 8px inner padding.
+```
+
+---
+
 ## Enforcement status (2026-06-12)
 
-All generator off-brand hexes (`#ff9900`, `#e8a020`, `#e65100`, `#b07b10`) replaced with `#e67e22`/`#140a02` across `lib/templates.js`, `lib/content.js`, `generate-reviews.js`, `generate-comparisons.js`, `generate-brand-comparisons.js`, `generate-phase1-content.js`, `generate-price-alert-page.js`. Shells (`postShell`, `wideShell`, `publish-design-to-wp.js`) converted to widescreen (`max-width:none`, 40px gutters).
+All generator off-brand hexes replaced with `#e67e22`/`#140a02`. Shells converted to dark, `max-width:1440px` centered, 40px gutters. New components (reviewsBlock, productImageGallery, buildInYourKitchen, buildSpecsExplained) follow dark token system above.
+
+**Files in compliance:** `lib/templates.js`, `lib/content.js`, `lib/styles.js`, `lib/voice.js`, `generate-reviews.js`, `generate-comparisons.js`, `generate-brand-comparisons.js`, `generate-phase1-content.js`, `generate-price-alert-page.js`, `publish-design-to-wp.js`
