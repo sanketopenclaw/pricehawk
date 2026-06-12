@@ -12,6 +12,7 @@ const {
 } = require('./lib/content')
 const { reviewSchema, slugify } = require('./lib/schema')
 const { reviewIntroLead, trackingSinceNote, cantTellYouBlock, voiceLint } = require('./lib/voice')
+const { prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -169,7 +170,7 @@ ${bullets.map(b => `  <li>${b}</li>`).join('\n')}
 </ul>`
 }
 
-function buildReviewHTML(product, catSlug, slugIndex = {}) {
+function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []) {
   const name     = product.product_name || product._legacy?.name || 'Product'
   const brand    = titleCase(product.brand_id || '')
   const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
@@ -191,6 +192,18 @@ function buildReviewHTML(product, catSlug, slugIndex = {}) {
   const introLead     = reviewIntroLead(asin)
   const trackNote     = productId ? trackingSinceNote(productId, PRICE_SERIES_DIR) : null
 
+  const { pros, cons } = prosConsFromSpecs(product, categoryProducts, catLabel)
+  const capacity  = getSpecVal(specs, 'Capacity', 'Volume', 'Bowl Capacity', 'Jug Capacity')
+  const whoFor    = (capacity && familySizeFromCapacity(capacity)) || 'everyday home use'
+  const keyStrength = pros[0]
+    ? pros[0].split('—')[0].trim().replace(/^./, c => c.toLowerCase())
+    : 'its overall spec balance for the price'
+  const verdictName = (() => {
+    const raw = name.replace(/\s*[\\|,(].*$/, '').trim()
+    return raw.length > 55 ? raw.substring(0, 52).replace(/\s+\S*$/, '') + '…' : raw
+  })()
+  const verdictHTML = verdictBox({ name: verdictName, catLabel, seg, whoFor, keyStrength, link, seed: asin })
+
   const schema = reviewSchema({ name, brand, catLabel, catSlug, link, faqs, asinSlug })
 
   const methodCtx = `This assessment is based on published specifications for the ${name}, aggregated user feedback, competitive positioning against comparable models, and PriceHawk's tracked price history.`
@@ -200,6 +213,9 @@ function buildReviewHTML(product, catSlug, slugIndex = {}) {
 <nav style="font-size:13px;color:#888;margin-bottom:20px;">
 <a href="/" style="color:#666;">Home</a> › <a href="/best-${catSlug}/" style="color:#666;">Best ${catLabel}s in India ${YEAR}</a> › ${name.substring(0, 50)}… Review
 </nav>
+
+${verdictHTML}
+${updatedLine()}
 
 <p style="font-size:16px;line-height:1.7;color:#333;">${introLead} ${intro}</p>
 
@@ -213,6 +229,8 @@ function buildReviewHTML(product, catSlug, slugIndex = {}) {
     Check price on Amazon →
   </a>
 </div>
+
+${prosConsBlock(pros, cons)}
 
 <h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;">Full Specifications</h2>
 ${specsHTML || '<p style="color:#666;font-size:14px;">Refer to the Amazon product page for full specifications.</p>'}
@@ -273,6 +291,8 @@ async function main() {
   if (!fs.existsSync(QUEUE_FILE)) { console.error('Run content-opportunity-engine.js first'); process.exit(1) }
 
   const productIndex = loadProducts(KITCHEN, PRODS_DIR)
+  const byCat = {}
+  for (const p of Object.values(productIndex)) (byCat[p._catSlug] = byCat[p._catSlug] || []).push(p)
   const slugIndex = buildSlugIndex(JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8')))
 
   const queue = JSON.parse(fs.readFileSync(QUEUE_FILE, 'utf8'))
@@ -303,7 +323,7 @@ async function main() {
       const metaDesc = metaDescription(name, catLabel, specs, seg)
       const brandName = brand.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       const focusKw  = `${brandName} ${CAT_LABELS[catSlug] || catLabel} review`.toLowerCase()
-      const html   = buildReviewHTML(product, catSlug, slugIndex)
+      const html   = buildReviewHTML(product, catSlug, slugIndex, byCat[catSlug] || [])
       const lintHits = voiceLint(html)
       if (lintHits.length) console.warn(`  ⚠ voice lint [${slug}]: ${lintHits.map(h => h.match).join(', ')}`)
       const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc, focusKw, postType: 'posts', featuredMediaId: product.wp_image_id || null })
