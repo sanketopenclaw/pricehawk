@@ -11,6 +11,7 @@ const {
   buildSlugIndex, relatedLinks, metaDescription,
 } = require('./lib/content')
 const { reviewSchema, slugify } = require('./lib/schema')
+const { reviewIntroLead, trackingSinceNote, cantTellYouBlock, voiceLint } = require('./lib/voice')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -187,6 +188,8 @@ function buildReviewHTML(product, catSlug, slugIndex = {}) {
   const asinSlug      = `review-${slugify(brand)}-${asin.toLowerCase()}`
   const productId     = product.product_id || null
   const sparkline     = productId ? sparklineSVG(productId, PRICE_SERIES_DIR) : ''
+  const introLead     = reviewIntroLead(asin)
+  const trackNote     = productId ? trackingSinceNote(productId, PRICE_SERIES_DIR) : null
 
   const schema = reviewSchema({ name, brand, catLabel, catSlug, link, faqs, asinSlug })
 
@@ -198,12 +201,13 @@ function buildReviewHTML(product, catSlug, slugIndex = {}) {
 <a href="/" style="color:#666;">Home</a> › <a href="/best-${catSlug}/" style="color:#666;">Best ${catLabel}s in India ${YEAR}</a> › ${name.substring(0, 50)}… Review
 </nav>
 
-<p style="font-size:16px;line-height:1.7;color:#333;">${intro}</p>
+<p style="font-size:16px;line-height:1.7;color:#333;">${introLead} ${intro}</p>
 
 <div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;margin:20px 0;">
   <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 4px;">${brand}</p>
   <h2 style="font-size:17px;font-weight:700;margin:0 0 12px;line-height:1.4;">${name}</h2>
   ${sparkline ? `<p style="font-size:12px;color:#888;margin:0 0 10px;">Price trend (${YEAR}) ${sparkline}</p>` : ''}
+  ${trackNote ? `<p style="font-size:12.5px;color:#666;margin:0 0 10px;font-style:italic;">${trackNote}</p>` : ''}
   <a href="${link}" target="_blank" rel="nofollow sponsored noopener"
      style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:14px;font-weight:700;padding:9px 20px;border-radius:4px;">
     Check price on Amazon →
@@ -217,6 +221,8 @@ ${featuresHTML ? `<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;"
 
 <h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;">Who Should Buy This?</h2>
 ${whoHTML}
+
+${cantTellYouBlock(catLabel)}
 
 ${methodologyBlock(methodCtx)}
 
@@ -298,6 +304,8 @@ async function main() {
       const brandName = brand.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
       const focusKw  = `${brandName} ${CAT_LABELS[catSlug] || catLabel} review`.toLowerCase()
       const html   = buildReviewHTML(product, catSlug, slugIndex)
+      const lintHits = voiceLint(html)
+      if (lintHits.length) console.warn(`  ⚠ voice lint [${slug}]: ${lintHits.map(h => h.match).join(', ')}`)
       const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc, focusKw, postType: 'posts', featuredMediaId: product.wp_image_id || null })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${short.substring(0, 45)}`)

@@ -10,6 +10,7 @@ const {
   buildSlugIndex, relatedLinks, metaDescription,
 } = require('./lib/content')
 const { comparisonSchema, slugify } = require('./lib/schema')
+const { tradeoffVerdict, voiceLint } = require('./lib/voice')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -117,8 +118,8 @@ function buildPickDecisions(p1, p2, specs1, specs2) {
     else { reasons2.push('more budget-friendly'); reasons1.push('more premium build and features') }
   }
 
-  if (!reasons1.length) reasons1.push('its specific combination of specifications matches your primary requirement')
-  if (!reasons2.length) reasons2.push('its specific combination of specifications matches your primary requirement')
+  if (!reasons1.length) reasons1.push('the lower price on the day you buy — the spec differences here are minor')
+  if (!reasons2.length) reasons2.push('the lower price on the day you buy — the spec differences here are minor')
 
   return { reasons1, reasons2 }
 }
@@ -207,6 +208,8 @@ ${specRowsHTML}
 </div>
 
 <h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;">Which One Should You Buy?</h2>
+
+${tradeoffVerdict({ short1, short2, reasons1, reasons2, seed: `${asin1}-${asin2}` })}
 
 <div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:14px 18px;border-radius:0 6px 6px 0;margin-bottom:12px;">
   <p style="margin:0;font-size:14px;line-height:1.6;">
@@ -309,6 +312,8 @@ async function main() {
       const catSing = CAT_LABEL_SINGULAR[catSlug] || catLabel.toLowerCase()
       const focusKw = `${b1Name} vs ${b2Name} ${catSing}`.toLowerCase()
       const html   = buildComparisonHTML(p1, p2, catSlug, slugIndex)
+      const lintHits = voiceLint(html)
+      if (lintHits.length) console.warn(`  ⚠ voice lint [${slug}]: ${lintHits.map(h => h.match).join(', ')}`)
       const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc, focusKw, postType: 'posts', featuredMediaId: p1?.wp_image_id || p2?.wp_image_id || null })
       if (result) {
         console.log(`  ✓ [${result.action}] ${catSlug} | ${name1.substring(0,30)} vs ${name2.substring(0,30)}`)

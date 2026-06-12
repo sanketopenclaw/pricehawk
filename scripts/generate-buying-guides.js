@@ -9,6 +9,7 @@ const {
   topValueProduct, metaDescription,
 } = require('./lib/content')
 const { guideSchema, slugify } = require('./lib/schema')
+const { guideOpener, voiceLint } = require('./lib/voice')
 const {
   classifyPicks,
   buildPageStyles,
@@ -155,8 +156,9 @@ function buildGuideHTML(products, catSlug, subtype, useCase) {
   // Section 1 – Quick Picks
   const s1 = buildQuickPicksTable(picks, catLabel, catSingular, TAG)
 
-  // Intro paragraph
-  const introHTML = `<p style="font-size:16px;line-height:1.8;color:#333;margin:24px 0;">${intro}</p>`
+  // Diagnosis-style opener (problem first), then category context paragraph
+  const introHTML = `${guideOpener(catLabel, catSingular, catSlug)}
+<p style="font-size:16px;line-height:1.8;color:#333;margin:24px 0;">${intro}</p>`
 
   // Section 2 – Trust / Methodology
   const s2 = buildTrustSection(catLabel)
@@ -279,6 +281,8 @@ async function main() {
           ? `best ${catSingular} for ${useCase.toLowerCase()}`
           : `best ${catSingular} in india`
       const html   = buildGuideHTML(products, catSlug, sub, useCase)
+      const lintHits = voiceLint(html)
+      if (lintHits.length) console.warn(`  ⚠ voice lint [${guideSlug}]: ${lintHits.map(h => h.match).join(', ')}`)
       const topImg = products.find(p => p.wp_image_id)?.wp_image_id || null
       const result = await wpUpsertPage({ title, slug: guideSlug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc: md, focusKw, postType: 'posts', featuredMediaId: topImg })
       if (result) {
