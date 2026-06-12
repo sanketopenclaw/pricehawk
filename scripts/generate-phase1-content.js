@@ -18,7 +18,7 @@ require('dotenv').config()
 const fs   = require('fs')
 const path = require('path')
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
-const { asciDisclosure, methodologyBlock, resolveOffer, metaDescription } = require('./lib/content')
+const { asciDisclosure, methodologyBlock, resolveOffer, affiliateLink, metaDescription } = require('./lib/content')
 const { buildPageStyles } = require('./lib/styles')
 const { postShell } = require('./lib/templates')
 
@@ -193,7 +193,7 @@ function buildCategoryHubHTML(catSlug, products) {
 
   const productRows = sorted.map((p, i) => {
     const offer    = resolveOffer(p)
-    const link     = offer.affiliate_url || `https://www.amazon.in/dp/${offer.external_id}?tag=${TAG}`
+    const link     = affiliateLink(offer, 'hub')
     const name     = cleanProductName(p.product_name || p._legacy?.name || 'Product')
     const brand    = titleCase(p.brand_id || '')
     const imgSrc   = p.wp_image_url || p._legacy?.img || ''
@@ -291,7 +291,7 @@ function buildBrandPageHTML(brand, catSlug, brandProducts) {
 
   const productRows = sorted.map((p, i) => {
     const offer = resolveOffer(p)
-    const link  = offer.affiliate_url || `https://www.amazon.in/dp/${offer.external_id}?tag=${TAG}`
+    const link  = affiliateLink(offer, 'hub')
     const name  = p.product_name || p._legacy?.name || 'Product'
     const img   = p._legacy?.img || ''
     const summary = buildProductSummary(p)

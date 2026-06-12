@@ -5,12 +5,12 @@ const path = require('path')
 
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
-  resolveOffer, asciDisclosure, loadProducts, getSpecVal, sparklineSVG,
+  resolveOffer, affiliateLink, asciDisclosure, loadProducts, getSpecVal, sparklineSVG,
   topValueProduct, metaDescription,
 } = require('./lib/content')
 const { guideSchema, slugify } = require('./lib/schema')
 const { guideOpener, voiceLint } = require('./lib/voice')
-const { postShell } = require('./lib/templates')
+const { postShell, telegramCTA } = require('./lib/templates')
 const {
   classifyPicks,
   buildPageStyles,
@@ -192,7 +192,7 @@ function buildGuideHTML(products, catSlug, subtype, useCase) {
   // Schema.org
   const productList = products.map(p => ({
     name: shortName(p.product_name || p._legacy?.name || '', 60),
-    link: (() => { const o = resolveOffer(p); return o.affiliate_url || `https://www.amazon.in/dp/${o.external_id || p._legacy?.asin}?tag=${TAG}` })()
+    link: affiliateLink(resolveOffer(p), 'gde')
   }))
   const schema = guideSchema({ catLabel, catSlug, slug: guideSlug, products: productList })
   const schemaJSON = JSON.stringify(schema, null, 2).replace(/</g, '\\u003c').replace(/>/g, '\\u003e')
@@ -231,6 +231,8 @@ ${s8}
 ${s9}
 
 ${s10}
+
+${telegramCTA()}
 
 <script type="application/ld+json">
 ${schemaJSON}

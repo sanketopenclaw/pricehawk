@@ -5,13 +5,13 @@ const path = require('path')
 
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
-  resolveOffer, specTable, asciDisclosure,
+  resolveOffer, affiliateLink, specTable, asciDisclosure,
   methodologyBlock, loadProducts, getSpecVal,
   buildSlugIndex, relatedLinks, metaDescription,
 } = require('./lib/content')
 const { comparisonSchema, slugify } = require('./lib/schema')
 const { tradeoffVerdict, voiceLint } = require('./lib/voice')
-const { postShell } = require('./lib/templates')
+const { postShell, telegramCTA } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
 const USER = process.env.WORDPRESS_USERNAME
@@ -134,8 +134,8 @@ function buildComparisonHTML(p1, p2, catSlug, slugIndex = {}) {
   const short2 = shortName(name2)
   const offer1 = resolveOffer(p1)
   const offer2 = resolveOffer(p2)
-  const link1  = offer1.affiliate_url || `https://www.amazon.in/dp/${offer1.external_id || p1._legacy?.asin}?tag=${TAG}`
-  const link2  = offer2.affiliate_url || `https://www.amazon.in/dp/${offer2.external_id || p2._legacy?.asin}?tag=${TAG}`
+  const link1  = affiliateLink(offer1, 'cmp')
+  const link2  = affiliateLink(offer2, 'cmp')
   const asin1  = offer1.external_id || p1._legacy?.asin || ''
   const asin2  = offer2.external_id || p2._legacy?.asin || ''
   const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
@@ -180,7 +180,7 @@ This comparison breaks down the key specification differences to help you decide
     <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 6px;">${brand1}</p>
     <p style="font-size:15px;font-weight:700;margin:0 0 14px;line-height:1.4;">${short1}</p>
     <a href="${link1}" target="_blank" rel="nofollow sponsored noopener"
-       style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
+       style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
       Check price on Amazon →
     </a>
   </div>
@@ -188,7 +188,7 @@ This comparison breaks down the key specification differences to help you decide
     <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 6px;">${brand2}</p>
     <p style="font-size:15px;font-weight:700;margin:0 0 14px;line-height:1.4;">${short2}</p>
     <a href="${link2}" target="_blank" rel="nofollow sponsored noopener"
-       style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
+       style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
       Check price on Amazon →
     </a>
   </div>
@@ -238,16 +238,18 @@ ${methodologyBlock(methodCtx)}
   <p style="margin:0 0 10px;font-weight:700;font-size:15px;">Check current prices on Amazon India:</p>
   <div style="display:flex;gap:12px;flex-wrap:wrap;">
     <a href="${link1}" target="_blank" rel="nofollow sponsored noopener"
-       style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
+       style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
       ${short1.substring(0,30)}${short1.length>30?'…':''} →
     </a>
     <a href="${link2}" target="_blank" rel="nofollow sponsored noopener"
-       style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
+       style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
       ${short2.substring(0,30)}${short2.length>30?'…':''} →
     </a>
   </div>
   <p style="margin:10px 0 0;font-size:12px;color:#999;">Amazon prices change frequently. Click to see current prices.</p>
 </div>
+
+${telegramCTA()}
 
 ${faqs.length ? `<h2 style="font-size:20px;font-weight:700;margin:32px 0 12px;">Frequently Asked Questions</h2>
 ${faqs.map(([q, a]) => `<details style="border:1px solid #e0e0e0;border-radius:4px;margin-bottom:8px;">
@@ -259,7 +261,7 @@ ${relatedLinks(asin1, catSlug, slugIndex, catLabel)}
 
 <hr style="margin:32px 0;border:none;border-top:1px solid #e0e0e0;">
 <p style="font-size:13px;color:#888;">
-  <a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← See all ${catLabel}s compared in India ${YEAR}</a>
+  <a href="/best-${catSlug}/" style="color:#e67e22;font-weight:600;">← See all ${catLabel}s compared in India ${YEAR}</a>
 </p>
 
 <script type="application/ld+json">

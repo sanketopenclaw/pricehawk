@@ -5,7 +5,7 @@ const path = require('path')
 
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
-  resolveOffer, specTable, featureHighlights,
+  resolveOffer, affiliateLink, specTable, featureHighlights,
   familySizeFromCapacity, getSpecVal, asciDisclosure,
   methodologyBlock, loadProducts, sparklineSVG,
   buildSlugIndex, relatedLinks, metaDescription,
@@ -375,7 +375,7 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
   const catLabel = CAT_LABELS[catSlug] || titleCase(catSlug)
   const offer    = resolveOffer(product)
   const asin     = offer.external_id || product._legacy?.asin || ''
-  const link     = offer.affiliate_url || `https://www.amazon.in/dp/${asin}?tag=${TAG}`
+  const link     = affiliateLink(offer, 'rev')
   const seg      = product.price_segment || product._legacy?.price_segment || 'mid-range'
   const specs    = product.specifications || {}
   const features = specs._features || []

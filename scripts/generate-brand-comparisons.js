@@ -5,7 +5,7 @@ const path = require('path')
 
 const { makeAuth, wpUpsertPage } = require('./lib/wp')
 const {
-  resolveOffer, asciDisclosure, methodologyBlock,
+  resolveOffer, affiliateLink, asciDisclosure, methodologyBlock,
   loadProducts, getSpecVal, bestValueScore,
 } = require('./lib/content')
 const { slugify } = require('./lib/schema')
@@ -27,6 +27,12 @@ const CAT_LABELS = {
   'induction-cooktops':'Induction Cooktops','electric-kettles':'Electric Kettles',
   'food-processors':'Food Processors','hand-blenders':'Hand Blenders',
   'sandwich-makers':'Sandwich Makers','rice-cookers':'Rice Cookers',
+}
+const CAT_LABEL_SINGULAR = {
+  'air-fryers':'air fryer','mixer-grinders':'mixer grinder','coffee-machines':'coffee machine',
+  'induction-cooktops':'induction cooktop','electric-kettles':'electric kettle',
+  'food-processors':'food processor','hand-blenders':'hand blender',
+  'sandwich-makers':'sandwich maker','rice-cookers':'rice cooker',
 }
 
 const BRAND_PAIRS = [
@@ -98,8 +104,8 @@ function buildBrandCompHTML(b1Products, b2Products, b1, b2, catSlug) {
 
   const topOffer1 = top1 ? resolveOffer(top1) : null
   const topOffer2 = top2 ? resolveOffer(top2) : null
-  const topLink1 = topOffer1?.affiliate_url || (topOffer1?.external_id ? `https://www.amazon.in/dp/${topOffer1.external_id}?tag=${TAG}` : '#')
-  const topLink2 = topOffer2?.affiliate_url || (topOffer2?.external_id ? `https://www.amazon.in/dp/${topOffer2.external_id}?tag=${TAG}` : '#')
+  const topLink1 = topOffer1 ? affiliateLink(topOffer1, 'brc') : '#'
+  const topLink2 = topOffer2 ? affiliateLink(topOffer2, 'brc') : '#'
 
   // Who wins on wattage
   let wattVerdict = ''
@@ -175,7 +181,7 @@ Both brands cover the full price range for Indian buyers. ${B1} products tend to
     <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 6px;">Best Value — ${B1}</p>
     <p style="font-size:15px;font-weight:700;margin:0 0 12px;line-height:1.4;">${shortName(top1.product_name || top1._legacy?.name || '')}</p>
     <a href="${topLink1}" target="_blank" rel="nofollow sponsored noopener"
-       style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
+       style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
       Check price on Amazon →
     </a>
   </div>` : ''}
@@ -183,7 +189,7 @@ Both brands cover the full price range for Indian buyers. ${B1} products tend to
     <p style="font-size:12px;color:#888;font-weight:700;text-transform:uppercase;margin:0 0 6px;">Best Value — ${B2}</p>
     <p style="font-size:15px;font-weight:700;margin:0 0 12px;line-height:1.4;">${shortName(top2.product_name || top2._legacy?.name || '')}</p>
     <a href="${topLink2}" target="_blank" rel="nofollow sponsored noopener"
-       style="display:inline-block;background:#ff9900;color:#111;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
+       style="display:inline-block;background:#e67e22;color:#140a02;text-decoration:none;font-size:13px;font-weight:700;padding:8px 16px;border-radius:4px;">
       Check price on Amazon →
     </a>
   </div>` : ''}
@@ -193,7 +199,7 @@ ${methodologyBlock(methodCtx)}
 
 <hr style="margin:32px 0;border:none;border-top:1px solid #e0e0e0;">
 <p style="font-size:13px;color:#888;">
-  <a href="/best-${catSlug}/" style="color:#e65100;font-weight:600;">← See all ${catLabel} in India ${YEAR}</a>
+  <a href="/best-${catSlug}/" style="color:#e67e22;font-weight:600;">← See all ${catLabel} in India ${YEAR}</a>
 </p>
 
 <script type="application/ld+json">
@@ -242,8 +248,10 @@ async function main() {
     const md = metaDesc.length > 160 ? metaDesc.substring(0, 157) + '…' : metaDesc
 
     try {
+      const catSing = CAT_LABEL_SINGULAR[cat] || catLabel.toLowerCase()
+      const focusKw = `${B1} vs ${B2} ${catSing}`.toLowerCase()
       const html   = buildBrandCompHTML(b1Products, b2Products, b1, b2, cat)
-      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc: md })
+      const result = await wpUpsertPage({ title, slug, content: html }, { wp: WP, auth: AUTH, dryRun, metaDesc: md, focusKw, postType: 'posts' })
       if (dryRun) { console.log(`    [dry] ${slug}`); continue }
       if (result) {
         console.log(`  ✓ [${result.action}] ${b1} vs ${b2} (${cat})`)

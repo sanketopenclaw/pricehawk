@@ -271,8 +271,16 @@ function metaDescription(name, catLabel, specs, seg) {
   return desc.length > 160 ? desc.substring(0, 157) + '…' : desc
 }
 
+function affiliateLink(offer, subid) {
+  const base = process.env.AMAZON_AFFILIATE_TAG || 'pricehawkin-21'
+  const tag  = subid ? `${base}-${subid}` : base
+  const url  = offer.affiliate_url || `https://www.amazon.in/dp/${offer.external_id}?tag=${base}`
+  return url.replace(/tag=[^&&#]+/, `tag=${tag}`)
+}
+
 module.exports = {
   resolveOffer,
+  affiliateLink,
   specTable,
   featureHighlights,
   familySizeFromCapacity,
