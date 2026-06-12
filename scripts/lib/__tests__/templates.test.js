@@ -177,6 +177,30 @@ test('tocBlock renders anchor links', () => {
   assert.ok(html.includes('href="#verdict"'))
 })
 
+// --- specsAccordion ---
+
+const { specsAccordion } = require('../templates')
+
+test('specsAccordion wraps specs HTML in a closed details accordion', () => {
+  const html = specsAccordion('<table><tr><td>spec</td></tr></table>')
+  assert.ok(html.includes('<details'), 'no details element')
+  assert.ok(html.includes('<summary'), 'no summary element')
+  assert.ok(html.includes('spec'), 'inner content missing')
+  assert.ok(!/<details[^>]*\bopen\b/.test(html), 'should be closed by default')
+  assert.ok(html.includes('id="specs"'), 'needs id for TOC anchor')
+})
+
+test('specsAccordion returns empty string for falsy input', () => {
+  assert.strictEqual(specsAccordion(''), '')
+  assert.strictEqual(specsAccordion(null), '')
+  assert.strictEqual(specsAccordion(undefined), '')
+})
+
+test('specsAccordion accepts custom label', () => {
+  const html = specsAccordion('<p>data</p>', 'Technical Details')
+  assert.ok(html.includes('Technical Details'))
+})
+
 // --- updatedLine ---
 
 test('updatedLine shows month-year and daily tracking claim', () => {

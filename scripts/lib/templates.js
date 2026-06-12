@@ -283,7 +283,21 @@ ${articleHtml}
 <!-- /wp:html -->`
 }
 
+// Specifications hidden in a closed accordion — keeps the page clean
+// without losing the data. Opens on click. id="specs" anchors the TOC link.
+function specsAccordion(specsHTML, label = 'Full Specifications') {
+  if (!specsHTML) return ''
+  return `<details id="specs" style="border:1px solid #e0e0e0;border-radius:6px;margin:28px 0;">
+  <summary style="padding:14px 20px;cursor:pointer;font-size:16px;font-weight:700;color:#1a1a1a;background:#fafafa;border-radius:6px;user-select:none;display:flex;justify-content:space-between;align-items:center;">
+    ${label}<span style="font-size:12px;color:#999;font-weight:400;">click to expand</span>
+  </summary>
+  <div style="padding:16px 20px;border-top:1px solid #e0e0e0;">
+    ${specsHTML}
+  </div>
+</details>`
+}
+
 module.exports = {
   prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock, median,
-  wideShell, specScorecard, howItStacksUp, tocBlock, postShell,
+  wideShell, specScorecard, howItStacksUp, tocBlock, postShell, specsAccordion,
 }

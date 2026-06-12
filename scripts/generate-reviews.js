@@ -14,7 +14,7 @@ const { reviewSchema, slugify } = require('./lib/schema')
 const { reviewIntroLead, trackingSinceNote, cantTellYouBlock, voiceLint } = require('./lib/voice')
 const {
   prosConsFromSpecs, verdictBox, updatedLine, prosConsBlock,
-  postShell, specScorecard, howItStacksUp, tocBlock,
+  postShell, specScorecard, howItStacksUp, tocBlock, specsAccordion,
 } = require('./lib/templates')
 
 const WP   = (process.env.WORDPRESS_URL || '').replace(/\/$/, '')
@@ -102,6 +102,55 @@ const CAT_FAQS = {
   ],
 }
 
+const CAT_BODY = {
+  'air-fryers': (specs, seg) => {
+    const cap  = getSpecVal(specs, 'Capacity', 'Volume')
+    const ctrl = getSpecVal(specs, 'Controller Type', 'Control Method', 'Controls')
+    const ctrlNote = ctrl && /digital|touch/i.test(ctrl)
+      ? 'Digital controls let you set time and temperature without guesswork — useful once you learn a few go-to settings for your regular dishes.'
+      : ctrl && /manual|knob/i.test(ctrl)
+      ? 'The manual dial controls are simple and reliable, though you will rely on your own judgment for timing rather than preset programs.'
+      : ''
+    const capNote = cap
+      ? `The ${cap} basket is the practical constraint to check first — it determines how many portions you can cook at once, which matters more than wattage for most households.`
+      : ''
+    const segNote = seg === 'budget'
+      ? 'At this price point, the trade-off is usually simpler controls and a smaller basket, which is a fair exchange if you are trying air frying for the first time.'
+      : seg === 'flagship' || seg === 'premium'
+      ? 'Premium air fryers earn their price with better build quality, more precise temperature control, and larger capacities — the difference shows when you are cooking every day.'
+      : 'Mid-range air fryers have improved significantly — you get most of what you need without paying for features that mainly add complexity.'
+    return [capNote, ctrlNote, segNote].filter(Boolean).join(' ')
+  },
+  'mixer-grinders': (specs, seg) => {
+    const w = getSpecVal(specs, 'Output Wattage', 'Wattage')
+    return `A mixer grinder is one of the most-used appliances in an Indian kitchen — if you make chutneys, idli batter, or masala pastes from scratch, the motor wattage and jar quality matter more than most spec-sheet numbers. ${w ? `At ${w}, this model` : 'This model'} ${seg === 'budget' ? 'covers basic grinding well, though sustained heavy-duty use over years will reveal the limits of its motor.' : 'handles the full range of typical Indian kitchen grinding without straining.'}  The jar material and the warranty on the motor are the two things worth looking at most carefully when comparing options in this category.`
+  },
+  'coffee-machines': (specs, seg) => {
+    return `Coffee machines in India cover a wide range of use cases — from South Indian filter coffee to espresso-style drinks — and the right machine depends entirely on what you actually drink at home. ${seg === 'budget' ? 'Entry-level machines simplify the process but limit your coffee styles.' : seg === 'premium' || seg === 'flagship' ? 'Premium machines give you proper brewing pressure and temperature control, which makes a real difference for espresso and pour-over.' : 'Mid-range machines strike a balance between convenience and quality that works for most daily coffee drinkers.'} Descaling regularly — especially in hard-water cities — will extend the machine's life significantly.`
+  },
+  'induction-cooktops': (specs, seg) => {
+    const w = getSpecVal(specs, 'Output Wattage', 'Wattage')
+    return `Induction cooktops have become a practical primary or backup cooking surface in Indian homes — they heat faster than most domestic gas burners, use significantly less energy, and the smooth surface is far easier to clean. ${w ? `At ${w}, this model` : 'This model'} ${parseInt(w) >= 1800 ? 'delivers high-heat performance suitable for stir-frying and rapid boiling.' : 'handles everyday cooking tasks well, including boiling, simmering, and frying.'} One practical check before buying: confirm your existing cookware is induction-compatible. Only ferromagnetic vessels work — if a fridge magnet does not stick to the base, it will not work on induction.`
+  },
+  'electric-kettles': (specs, seg) => {
+    const cap = getSpecVal(specs, 'Capacity', 'Volume')
+    return `Electric kettles are one of the simplest appliances to get right — the main variables are capacity, interior material, and wattage. ${cap ? `A ${cap} kettle` : 'This kettle'} ${seg === 'budget' ? 'covers the basics well; the plastic taste some cheaper models have fades after a few uses.' : 'builds quality where it counts.'} Look for a stainless-steel interior over plastic — it stays cleaner, does not pick up odours, and lasts longer in hard-water conditions. If you drink only chai or instant coffee, temperature control is not worth paying for; it mainly matters for green tea and pour-over.`
+  },
+  'food-processors': (specs, seg) => {
+    return `A food processor handles the prep work that a mixer grinder does not — slicing, chopping, shredding, and sometimes kneading dough — which makes it most useful in kitchens where a lot of fresh ingredients are prepared daily. ${seg === 'budget' ? 'At the budget end, the motor is the trade-off — useful for occasional prep but not for sustained daily heavy use.' : 'This model is built for regular use with enough power to handle most household prep tasks without overheating.'} Bowl capacity and the number of included attachments both affect how useful it is in practice; check which ones are actually included versus sold separately.`
+  },
+  'hand-blenders': (specs, seg) => {
+    return `Hand blenders — also called immersion blenders — solve one specific problem better than any other appliance: blending soups, sauces, and smoothies directly in the pot or container, without transferring hot liquids. ${seg === 'budget' ? 'Basic models handle soft blending tasks well; the limitation shows with fibrous vegetables or extended blending.' : 'This model has enough power to handle most Indian kitchen tasks including thicker chutneys and smoothies.'} The quality of the seal where the blade meets the shaft matters a lot for cleaning ease; check that the head is fully removable and dishwasher-safe.`
+  },
+  'sandwich-makers': (specs, seg) => {
+    return `Sandwich makers are a morning staple in many Indian households — fast, low-fuss, and easy to clean compared to a pan. The main choice is between fixed plates (simpler, good for basic sandwiches) and removable plates (more versatile, easier to clean thoroughly). ${seg === 'budget' ? 'Budget models do the core job fine; the non-stick quality is the variable that shows over time.' : 'A non-stick coating that holds up over 2–3 years is worth the slight premium in this category.'} Preheat time and plate coverage are the two things that make a noticeable difference to the end result.`
+  },
+  'rice-cookers': (specs, seg) => {
+    const cap = getSpecVal(specs, 'Capacity', 'Volume')
+    return `Rice cookers take the monitoring out of cooking rice — one of the most common sources of kitchen frustration — and deliver consistent results. ${cap ? `A ${cap} capacity` : 'This capacity'} determines how many portions fit in a single batch, which is the most practical spec to match to your household size. ${seg === 'budget' ? 'Entry-level models handle plain rice well; for dal or khichdi, a multi-cook setting helps.' : 'This model is well-specified for the full range of typical rice dishes.'} The non-stick coating quality affects both cooking results and long-term durability — avoid metal utensils to preserve it.`
+  },
+}
+
 function titleCase(s) {
   return (s || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
@@ -186,7 +235,9 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
   const faqs     = CAT_FAQS[catSlug] || []
 
   const intro         = buildIntro(name, specs, catLabel, seg)
+  const bodyCopy      = (CAT_BODY[catSlug] || (() => ''))(specs, seg)
   const specsHTML     = specTable(specs)
+  const specsAccHTML  = specsAccordion(specsHTML || '<p style="color:#666;font-size:14px;">Refer to the Amazon product page for full specifications.</p>', 'Full Specifications')
   const featuresHTML  = featureHighlights(features)
   const whoHTML       = buildWhoShouldBuy(specs, catLabel, features)
   const asinSlug      = `review-${slugify(brand)}-${asin.toLowerCase()}`
@@ -211,9 +262,9 @@ function buildReviewHTML(product, catSlug, slugIndex = {}, categoryProducts = []
   const tocHTML = tocBlock([
     scorecardHTML && { id: 'scorecard', label: 'Spec Score' },
     (pros.length || cons.length) && { id: 'pros-cons', label: 'Good & Not-So-Good' },
-    { id: 'specs', label: 'Specifications' },
     stacksUpHTML && { id: 'stacks-up', label: 'vs Rivals' },
     { id: 'who-for', label: 'Who Should Buy' },
+    { id: 'specs', label: 'Specifications' },
     faqs.length && { id: 'faq', label: 'FAQ' },
   ].filter(Boolean))
 
@@ -233,7 +284,8 @@ ${verdictHTML}
 ${updatedLine()}
 ${tocHTML}
 
-<p style="font-size:16px;line-height:1.7;color:#333;">${introLead} ${intro}</p>
+<p style="font-size:16px;line-height:1.8;color:#333;">${introLead} ${intro}</p>
+${bodyCopy ? `<p style="font-size:15px;line-height:1.9;color:#444;margin:14px 0 20px;">${bodyCopy}</p>` : ''}
 
 <div style="display:flex;gap:20px;flex-wrap:wrap;margin:20px 0;align-items:stretch;">
 <div style="flex:1.2;min-width:300px;background:#f9f9f9;border:1px solid #e0e0e0;border-radius:6px;padding:16px 20px;">
@@ -251,9 +303,6 @@ ${scorecardHTML ? `<div style="flex:1;min-width:300px;">${scorecardHTML.replace(
 
 ${prosConsBlock(pros, cons)}
 
-<h2 id="specs" style="font-size:20px;font-weight:700;margin:28px 0 10px;">Full Specifications</h2>
-${specsHTML || '<p style="color:#666;font-size:14px;">Refer to the Amazon product page for full specifications.</p>'}
-
 ${stacksUpHTML}
 
 ${featuresHTML ? `<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;">What Makes This Stand Out</h2>\n${featuresHTML}` : ''}
@@ -262,6 +311,8 @@ ${featuresHTML ? `<h2 style="font-size:20px;font-weight:700;margin:28px 0 10px;"
 ${whoHTML}
 
 ${cantTellYouBlock(catLabel)}
+
+${specsAccHTML}
 
 ${methodologyBlock(methodCtx)}
 
